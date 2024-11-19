@@ -40,7 +40,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 	const [deleteConversion] = conversionsApi.useDeleteConversionMutation();
 	const unitDataById = useAppSelector(selectUnitDataById);
 	const meterDataById = useAppSelector(selectMeterDataById);
-	const allConversions = useAppSelector(selectConversionsDetails);
+	const conversionDetails = useAppSelector(selectConversionsDetails);
 
 	// Set existing conversion values
 	const values = { ...props.conversion };
@@ -62,18 +62,24 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 	};
 	/* End State */
 
-	const checkState = () => {
-		let msg = '';
+	const getConversionCount = (sourceId: number, conversions: ConversionData[]) => {
 		let count = 0;
+		for (const conversion of Object.values(conversions)) {
+			if (conversion.sourceId === sourceId) {
+				count++;
+			}
+		}
+		return count;
+	};
+
+	const checkState = () => {
+		const source = unitDataById[state.sourceId];
+		const dest = unitDataById[state.destinationId];
+		let msg = '';
 		let cancel = false;
 		let save = false;
-		const source = unitDataById[state.sourceId];
 		if (source.typeOfUnit === UnitType.meter) {
-			for (const conversion of Object.values(allConversions)) {
-				if (conversion.sourceId === source.id) {
-					count++;
-				}
-			}
+			const count = getConversionCount(source.id, conversionDetails);
 			if (count === 1) {
 				msg += `Deleting this meter conversion will orphan ${unitDataById[state.destinationId].name}\n`;
 				save = window.confirm(msg);
@@ -81,11 +87,23 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 				msg += 'Deleting this meter conversion will make the following meters ungraphable:\n';
 				for (const meterId of Object.values(meterDataById)) {
 					if (meterId.unitId == source.id) {
-						msg +=  `${meterId.name}\n`;
+						msg += `${meterId.name}\n`;
 						cancel = true;
 					}
 				}
 				save = window.confirm(msg);
+			}
+		} else if (source.typeOfUnit === UnitType.suffix) {
+			const count = getConversionCount(source.id, conversionDetails);
+			if (count === 1) {
+				msg += `Deleting this suffix conversion will disable use of ${source.name}.\n`;
+				save = window.confirm(msg);
+			}
+		} else if (source.typeOfUnit === UnitType.unit && dest.typeOfUnit === UnitType.unit) {
+			if (!state.bidirectional) {
+				
+			} else {
+				
 			}
 		}
 	};
