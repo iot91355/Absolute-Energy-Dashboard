@@ -15,7 +15,7 @@ import '../../styles/modal.css';
 import { tooltipBaseStyle } from '../../styles/modalStyle';
 import { TrueFalseType } from '../../types/items';
 import { ConversionData } from '../../types/redux/conversions';
-import { UnitType } from '../../types/redux/units';
+import { UnitData, UnitType } from '../../types/redux/units';
 import translate from '../../utils/translate';
 import ConfirmActionModalComponent from '../ConfirmActionModalComponent';
 import TooltipMarkerComponent from '../TooltipMarkerComponent';
@@ -62,11 +62,19 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 	};
 	/* End State */
 
-	const getConversionCount = (sourceId: number, conversions: ConversionData[]) => {
+	const getConversionCount = (unit: UnitData, conversions: ConversionData[]) => {
 		let count = 0;
-		for (const conversion of Object.values(conversions)) {
-			if (conversion.sourceId === sourceId) {
-				count++;
+		if (unit === unitDataById[state.sourceId]) {
+			for (const conversion of Object.values(conversions)) {
+				if (conversion.sourceId === unit.id) {
+					count++;
+				}
+			}
+		} else if (unit === unitDataById[state.destinationId]) {
+			for (const conversion of Object.values(conversions)) {
+				if (conversion.destinationId === unit.id) {
+					count++;
+				}
 			}
 		}
 		return count;
@@ -79,7 +87,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 		let cancel = false;
 		let save = false;
 		if (source.typeOfUnit === UnitType.meter) {
-			const count = getConversionCount(source.id, conversionDetails);
+			const count = getConversionCount(source, conversionDetails);
 			if (count === 1) {
 				msg += `Deleting this meter conversion will orphan ${unitDataById[state.destinationId].name}\n`;
 				save = window.confirm(msg);
@@ -94,16 +102,27 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 				save = window.confirm(msg);
 			}
 		} else if (source.typeOfUnit === UnitType.suffix) {
-			const count = getConversionCount(source.id, conversionDetails);
+			const count = getConversionCount(source, conversionDetails);
 			if (count === 1) {
 				msg += `Deleting this suffix conversion will disable use of ${source.name}.\n`;
 				save = window.confirm(msg);
 			}
 		} else if (source.typeOfUnit === UnitType.unit && dest.typeOfUnit === UnitType.unit) {
-			if (!state.bidirectional) {
-				
-			} else {
-				
+			const destCount = getConversionCount (dest, conversionDetails);
+			if (destCount === 1) {
+				msg += `Deleting this unit conversion will orphan ${unitDataById[state.destinationId].name}\n`;
+				save = window.confirm(msg);
+			}
+			if (state.bidirectional) {
+				const sourceCount = getConversionCount(source, conversionDetails);
+				if (sourceCount === 1) {
+					msg += `Deleting this unit conversion will orphan ${unitDataById[state.destinationId].name}\n`;
+					save = window.confirm(msg);
+				}
+			}
+			if (msg = '') {
+				msg += 'Deleting this unit conversion between two units of type unit will have consequences\n';
+				save = window.confirm(msg);
 			}
 		}
 	};
