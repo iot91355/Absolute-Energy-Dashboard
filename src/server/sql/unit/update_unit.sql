@@ -13,5 +13,6 @@ UPDATE units
 		preferred_display = ${preferredDisplay},
 		note = ${note},
 		max_val = ${maxVal},
-		min_val = ${minVal}
+		min_val = ${minVal},
+		disable_checks = ${disableChecks}
 	WHERE id = ${id};

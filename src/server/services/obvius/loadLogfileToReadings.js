@@ -119,7 +119,7 @@ async function loadLogfileToReadings(serialNumber, ipAddress, logfile, conn) {
 					maxDate: meter.maxDate,
 					threshold: readingGap,
 					maxError: meter.maxError,
-					disableChecks: meter.disableChecks
+					disableChecks: disableChecks
 				},
 				conn = conn,
 				honorDst = false,

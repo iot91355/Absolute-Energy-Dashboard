@@ -16,7 +16,7 @@ function formatUnitForResponse(item) {
 	return {
 		id: item.id, name: item.name, identifier: item.identifier, unitRepresent: item.unitRepresent,
 		secInRate: item.secInRate, typeOfUnit: item.typeOfUnit, suffix: item.suffix,
-		displayable: item.displayable, preferredDisplay: item.preferredDisplay, note: item.note, minVal: item.minVal, maxVal: item.maxVal
+		displayable: item.displayable, preferredDisplay: item.preferredDisplay, note: item.note, minVal: item.minVal, maxVal: item.maxVal, disableChecks: item.disableChecks
 	};
 }
 
@@ -83,6 +83,11 @@ router.post('/edit', async (req, res) => {
 			},
 			maxVal: {
 				type: 'number',
+			},
+			disableChecks: {
+				type: 'string',
+				minLength: 1,
+				enum: Object.values(Unit.disableChecksType)
 			}
 		}
 	};
@@ -109,6 +114,7 @@ router.post('/edit', async (req, res) => {
 			unit.note = req.body.note;
 			unit.minVal = req.body.minVal;
 			unit.maxVal = req.body.maxVal;
+			unit.disableChecks = req.body.disableChecks;
 			await unit.update(conn);
 		} catch (err) {
 			log.error('Failed to edit unit', err);
@@ -124,7 +130,7 @@ router.post('/edit', async (req, res) => {
 router.post('/addUnit', async (req, res) => {
 	const validUnit = {
 		type: 'object',
-		required: ['name', 'identifier', 'unitRepresent', 'typeOfUnit', 'displayable', 'preferredDisplay', 'minVal', 'maxVal'],
+		required: ['name', 'identifier', 'unitRepresent', 'typeOfUnit', 'displayable', 'preferredDisplay', 'minVal', 'maxVal', 'disableChecks'],
 		properties: {
 			// Removed id from properties list since it is set to undefined no matter what is passed.
 			name: {
@@ -173,6 +179,11 @@ router.post('/addUnit', async (req, res) => {
 			},
 			maxVal: {
 				type: 'number'
+			},
+			disableChecks: {
+				type: 'string',
+				minLength: 1,
+				enum: Object.values(Unit.disableChecksType)
 			}
 		}
 	};
@@ -196,7 +207,8 @@ router.post('/addUnit', async (req, res) => {
 					req.body.preferredDisplay,
 					req.body.note,
 					req.body.minVal,
-					req.body.maxVal
+					req.body.maxVal,
+					req.body.disableChecks
 				);
 				await newUnit.insert(t);
 			});

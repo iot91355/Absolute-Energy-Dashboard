@@ -13,6 +13,7 @@ import { durationFormat } from '../../utils/durationFormat';
 import { AreaUnitType } from '../../utils/getAreaUnitConversion';
 import { preferencesApi } from '../api/preferencesApi';
 import { selectOEDVersion } from '../../redux/api/versionApi';
+import { DisableChecksType } from '../../types/redux/units';
 
 export const defaultAdminState: AdminState = {
 	displayTitle: '',
@@ -34,7 +35,7 @@ export const defaultAdminState: AdminState = {
 	defaultMeterMaximumDate: moment(0).utc().add(5000, 'years').format('YYYY-MM-DD HH:mm:ssZ'),
 	defaultMeterReadingGap: 0,
 	defaultMeterMaximumErrors: 75,
-	defaultMeterDisableChecks: false,
+	defaultMeterDisableChecks: DisableChecksType.reject_none,
 	defaultHelpUrl: ''
 };
 
@@ -127,7 +128,7 @@ export const adminSlice = createSlice({
 			state.defaultMeterMaximumErrors = action.payload;
 			state.submitted = false;
 		},
-		updateDefaultMeterDisableChecks: (state, action: PayloadAction<boolean>) => {
+		updateDefaultMeterDisableChecks: (state, action: PayloadAction<DisableChecksType>) => {
 			state.defaultMeterDisableChecks = action.payload;
 			state.submitted = false;
 		},

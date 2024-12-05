@@ -10,7 +10,7 @@ import '../../styles/modal.css';
 import { TrueFalseType } from '../../types/items';
 import TooltipMarkerComponent from '../TooltipMarkerComponent';
 import TooltipHelpComponent from '../../components/TooltipHelpComponent';
-import { UnitRepresentType, DisplayableType, UnitType } from '../../types/redux/units';
+import { UnitRepresentType, DisplayableType, UnitType, DisableChecksType } from '../../types/redux/units';
 import { tooltipBaseStyle } from '../../styles/modalStyle';
 import { unitsApi } from '../../redux/api/unitsApi';
 import { useTranslate } from '../../redux/componentHooks';
@@ -41,7 +41,8 @@ export default function CreateUnitModalComponent() {
 		// The units API expects these values to be undefined on call so that the database can assign their values.
 		id: -99,
 		minVal: MIN_VAL,
-		maxVal: MAX_VAL
+		maxVal: MAX_VAL,
+		disableChecks: DisableChecksType.reject_none
 	};
 
 	/* State */
@@ -296,6 +297,20 @@ export default function CreateUnitModalComponent() {
 							<FormFeedback>
 								<FormattedMessage id="error.bounds" values={{ min: state.minVal, max: MAX_VAL }} />
 							</FormFeedback>
+						</FormGroup></Col>
+					</Row>
+					<Row xs='1' lg='2'>
+						{/* DisableChecks input */}
+						<Col><FormGroup>
+							<Label for='disableChecks'>{translate('disableChecks')}</Label>
+							<Input id='disableChecks' name='disableChecks' type='select'
+								onChange={e => handleStringChange(e)}
+								defaultValue={state.disableChecks}>
+								{Object.keys(DisableChecksType).map(key => {
+									return (<option value={key} key={key} >
+										{translate(`DisableChecksType.${key}`)}</option>);
+								})}
+							</Input>
 						</FormGroup></Col>
 					</Row>
 					{/* Note input */}

@@ -30,6 +30,7 @@ import TimeZoneSelect from '../TimeZoneSelect';
 import TooltipHelpComponent from '../TooltipHelpComponent';
 import TooltipMarkerComponent from '../TooltipMarkerComponent';
 import { selectUnitDataById } from '../../redux/api/unitsApi';
+import { DisableChecksType } from '../../types/redux/units';
 
 interface CreateMeterModalProps {
 	onCreateMeter?: (meterIdentifier: string) => void; // Define the type of the callback function
@@ -104,7 +105,8 @@ export default function CreateMeterModalComponent(props: CreateMeterModalProps):
 				...details,
 				unitId: selectedUnitId,
 				minVal: selectedUnit.minVal,
-				maxVal: selectedUnit.maxVal
+				maxVal: selectedUnit.maxVal,
+				disableChecks: selectedUnit.disableChecks
 			}));
 		}
 	};
@@ -632,17 +634,14 @@ export default function CreateMeterModalComponent(props: CreateMeterModalProps):
 							</FormFeedback>
 						</FormGroup></Col>
 						<Col><FormGroup>
-							<Label for='disableChecks'>{translate('meter.disableChecks')}</Label>
+							<Label for='disableChecks'>{translate('disableChecks')}</Label>
 							<Input id='disableChecks' name='disableChecks' type='select'
-								defaultValue={meterDetails.disableChecks?.toString()}
-								onChange={e => handleBooleanChange(e)}>
-								{
-									Object.keys(TrueFalseType).map(key =>
-										<option value={key} key={key}>
-											{translate(`TrueFalseType.${key}`)}
-										</option>
-									)
-								}
+								value={meterDetails.disableChecks}
+								onChange={e => handleStringChange(e)}>
+								{Object.keys(DisableChecksType).map(key => {
+									return (<option value={key} key={key} >
+										{translate(`DisableChecksType.${key}`)}</option>);
+								})}
 							</Input>
 						</FormGroup></Col>
 					</Row>

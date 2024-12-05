@@ -5,6 +5,7 @@
 import { ChartTypes } from './graph';
 import { LanguageTypes } from './i18n';
 import { AreaUnitType } from '../../utils/getAreaUnitConversion';
+import { DisableChecksType } from './units';
 
 
 export interface AdminState {
@@ -27,6 +28,6 @@ export interface AdminState {
 	defaultMeterMaximumDate: string;
 	defaultMeterReadingGap: number;
 	defaultMeterMaximumErrors: number;
-	defaultMeterDisableChecks: boolean;
+	defaultMeterDisableChecks: DisableChecksType;
 	defaultHelpUrl: string;
 }

@@ -433,7 +433,7 @@ async function insertMeters(metersToInsert, conn) {
 					maxDate: meter.maxDate,
 					threshold: meter.readingGap,
 					maxError: meter.maxError,
-					disableChecks: meter.disableChecks
+					disableChecks: disableChecks
 				}
 				if (meterData.file) {
 					// load data from file

@@ -60,7 +60,7 @@ class Meter {
 		reading = 0.0, startTimestamp = moment(0).utc().format('YYYY-MM-DD HH:mm:ssZ'), endTimestamp = moment(0).utc().format('YYYY-MM-DD HH:mm:ssZ'),
 		previousEnd = moment(0).utc(), unitId = -99, defaultGraphicUnit = -99, areaUnit = Unit.areaUnitType.NONE, readingFrequency = '00:15:00',
 		minVal = Number.MIN_SAFE_INTEGER, maxVal = Number.MAX_SAFE_INTEGER, minDate = moment(0).utc().format('YYYY-MM-DD HH:mm:ssZ'),
-		maxDate = moment(0).utc().add(5000, 'years').format('YYYY-MM-DD HH:mm:ssZ'), maxError = 75, disableChecks = false) {
+		maxDate = moment(0).utc().add(5000, 'years').format('YYYY-MM-DD HH:mm:ssZ'), maxError = 75, disableChecks) {
 		// In order for the CSV pipeline to work, the order of the parameters needs to match the order that the fields are declared.
 		// In addition, each new parameter has to be added at the very end.
 		this.id = id;
@@ -314,6 +314,14 @@ class Meter {
 	}
 
 	/**
+	 * Returns a promise to create the disableChecksType enum of reject_bad, reject_all, and reject_none.
+	 * @param {*} conn The connection to use.
+	 * @returns {Promise.<>}
+	 */
+	static createDisableChecksTypesEnum(conn) {
+		return conn.none(sqlFile('unit/create_disable_checks_types_enum.sql'));
+	}
+	/**
 	 * Makes the given meter valid.
 	 * @param {*} meter The meter.
 	 */
@@ -347,6 +355,12 @@ class Meter {
 		return unit;
 	}
 }
+
+Meter.disableChecksType = Object.freeze({
+	REJECT_BAD: 'reject_bad',
+	REJECT_ALL: 'reject_all',
+	REJECT_NONE: 'reject_none'
+});
 
 // The relates to the TS object MeterType for the same use in src/client/app/types/redux/meters.ts.
 // They should be kept in sync.

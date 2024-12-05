@@ -112,7 +112,7 @@ async function readMamacData(meter, conn) {
 			maxDate: meter.maxDate,
 			threshold: readingGap,
 			maxError: meter.maxError,
-			disableChecks: meter.disableChecks
+			disableChecks: disableChecks
 		},
 		conn = conn,
 		honorDst = false,
