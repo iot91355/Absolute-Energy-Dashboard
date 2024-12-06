@@ -87,46 +87,46 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 		let msg = '';
 		let cancel = false;
 		if (source.typeOfUnit === UnitType.meter) {
-			const count = getConversionCount(source, conversionDetails);
-			if (count === 1) {
-				msg += `Deleting this meter conversion will orphan ${unitDataById[state.destinationId].name}.\n`;
+			const srcCount = getConversionCount(source, conversionDetails);
+			if (srcCount === 1) {
+				msg += `${translate('conversion.delete.meter.orphan')} "${unitDataById[state.destinationId].name}".\n`;
 			} else {
-				msg += 'Deleting this meter conversion will make the following meter(s) ungraphable:\n';
+				msg += `${translate('conversion.delete.meter.ungraphable')}\n`;
 				for (const meterId of Object.values(meterDataById)) {
-					if (meterId.unitId == source.id) {
-						msg += `${meterId.name}\n`;
+					if (meterId.unitId === source.id) {
+						msg += `"${meterId.name}"\n`;
 						cancel = true;
 					}
 				}
 			}
 		} else if (source.typeOfUnit === UnitType.suffix) {
-			const count = getConversionCount(source, conversionDetails);
-			if (count === 1) {
-				msg += `Deleting this suffix conversion will disable use of ${source.name}.\n`;
+			const srcCount = getConversionCount(source, conversionDetails);
+			if (srcCount === 1) {
+				msg += `${translate('conversion.delete.suffix.disable')} "${source.name}".\n`;
 			}
 		} else if (source.typeOfUnit === UnitType.unit && dest.typeOfUnit === UnitType.unit) {
 			const destCount = getConversionCount(dest, conversionDetails);
 			if (destCount === 1) {
-				msg += `Deleting this unit conversion will orphan ${unitDataById[state.destinationId].name}.\n`;
+				msg += `${translate('conversion.delete.unit.orphan')} "${unitDataById[state.destinationId].name}".\n`;
 			}
 			if (state.bidirectional) {
-				const sourceCount = getConversionCount(source, conversionDetails);
-				if (sourceCount === 1) {
-					msg += `Deleting this unit conversion will orphan ${unitDataById[state.destinationId].name}.\n`;
+				const srcCount = getConversionCount(source, conversionDetails);
+				if (srcCount === 1) {
+					msg += `${translate('conversion.delete.unit.orphan')} "${unitDataById[state.destinationId].name}".\n`;
 				}
 			}
 			if (msg === '') {
-				msg += 'Deleting this unit conversion between two units of type unit will have consequences.\n';
+				msg += `${translate('conversion.delete.unit')}\n`;
 			}
 		}
 
 		if (msg === '') {
 			handleDeleteConfirmationModalOpen();
 		} else if (cancel) {
-			setDeleteConfirmationMessage(msg + 'This conversion cannot be deleted.\n');
+			setDeleteConfirmationMessage(msg + `${translate('conversion.delete.restricted')}\n`);
 			handleCancelModalOpen();
 		} else {
-			setDeleteConfirmationMessage(msg + deleteConfirmationMessage);
+			setDeleteConfirmationMessage(msg + translate('conversion.delete.conversion') + ' [' + props.conversionIdentifier + '] ?');
 			handleDeleteConfirmationModalOpen();
 		}
 	};
