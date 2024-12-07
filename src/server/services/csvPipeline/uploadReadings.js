@@ -195,7 +195,7 @@ async function uploadReadings(req, res, filepath, conn) {
 		maxDate: meter.maxDate,
 		threshold: meter.readingGap,
 		maxError: meter.maxError,
-		disableChecks: meter.disableChecks
+		disableChecks: disableChecks
 	}
 
 	return await loadCsvInput(

@@ -16,7 +16,7 @@ import { useAppSelector } from '../../redux/reduxHooks';
 import '../../styles/modal.css';
 import { tooltipBaseStyle } from '../../styles/modalStyle';
 import { TrueFalseType } from '../../types/items';
-import { DisplayableType, UnitData, UnitRepresentType, UnitType } from '../../types/redux/units';
+import { DisableChecksType, DisplayableType, UnitData, UnitRepresentType, UnitType } from '../../types/redux/units';
 import { conversionArrow } from '../../utils/conversionArrow';
 import { showErrorNotification, showSuccessNotification } from '../../utils/notifications';
 import ConfirmActionModalComponent from '../ConfirmActionModalComponent';
@@ -196,7 +196,8 @@ export default function EditUnitModalComponent(props: EditUnitModalComponentProp
 				|| props.unit.suffix != state.suffix
 				|| props.unit.note != state.note
 				|| props.unit.minVal != state.minVal
-				|| props.unit.maxVal != state.maxVal;
+				|| props.unit.maxVal != state.maxVal
+				|| props.unit.disableChecks != state.disableChecks;
 		} else {
 			// Tell user that not going to update due to input issues.
 			showErrorNotification(`${translate('unit.input.error')}`);
@@ -429,7 +430,6 @@ export default function EditUnitModalComponent(props: EditUnitModalComponentProp
 								onChange={e => handleNumberChange(e)}
 								min={MIN_VAL}
 								max={state.maxVal}
-								defaultValue={state.minVal}
 								required value={state.minVal}
 								invalid={state?.minVal < MIN_VAL || state?.minVal > state?.maxVal} />
 							<FormFeedback>
@@ -443,12 +443,25 @@ export default function EditUnitModalComponent(props: EditUnitModalComponentProp
 								onChange={e => handleNumberChange(e)}
 								min={state.minVal}
 								max={MAX_VAL}
-								defaultValue={state.maxVal}
 								required value={state.maxVal}
 								invalid={state?.maxVal > MAX_VAL || state?.minVal > state?.maxVal} />
 							<FormFeedback>
 								<FormattedMessage id="error.bounds" values={{ min: state.minVal, max: MAX_VAL }} />
 							</FormFeedback>
+						</FormGroup></Col>
+					</Row>
+					<Row xs='1' lg='2'>
+						{/* DisableChecks input */}
+						<Col><FormGroup>
+							<Label for='disableChecks'>{translate('disableChecks')}</Label>
+							<Input id='disableChecks' name='disableChecks' type='select'
+								onChange={e => handleStringChange(e)}
+								value={state.disableChecks}>
+								{Object.keys(DisableChecksType).map(key => {
+									return (<option value={key} key={key} >
+										{translate(`DisableChecksType.${key}`)}</option>);
+								})}
+							</Input>
 						</FormGroup></Col>
 					</Row>
 					{/* Note input */}

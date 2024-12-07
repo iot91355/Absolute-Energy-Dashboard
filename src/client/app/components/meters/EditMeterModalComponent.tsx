@@ -21,7 +21,7 @@ import '../../styles/modal.css';
 import { tooltipBaseStyle } from '../../styles/modalStyle';
 import { TrueFalseType } from '../../types/items';
 import { MeterData, MeterTimeSortType, MeterType } from '../../types/redux/meters';
-import { UnitRepresentType } from '../../types/redux/units';
+import { DisableChecksType, UnitRepresentType } from '../../types/redux/units';
 import { GPSPoint, isValidGPSInput } from '../../utils/calibration';
 import { AreaUnitType } from '../../utils/getAreaUnitConversion';
 import { getGPSString, nullToEmptyString } from '../../utils/input';
@@ -95,7 +95,8 @@ export default function EditMeterModalComponent(props: EditMeterModalComponentPr
 				...localMeterEdits,
 				unitId: selectedUnitId,
 				minVal: selectedUnit.minVal,
-				maxVal: selectedUnit.maxVal
+				maxVal: selectedUnit.maxVal,
+				disableChecks: selectedUnit.disableChecks
 			});
 		}
 	};
@@ -711,16 +712,16 @@ export default function EditMeterModalComponent(props: EditMeterModalComponentPr
 						</FormGroup></Col>
 						{/* DisableChecks input */}
 						<Col><FormGroup>
-							<Label for='disableChecks'>{translate('meter.disableChecks')}</Label>
+							<Label for='disableChecks'>{translate('disableChecks')}</Label>
 							<Input
 								id='disableChecks'
 								name='disableChecks'
 								type='select'
-								value={localMeterEdits?.disableChecks?.toString()}
-								onChange={e => handleBooleanChange(e)}
-								invalid={localMeterEdits?.disableChecks && localMeterEdits.unitId === -99}>
-								{Object.keys(TrueFalseType).map(key => {
-									return (<option value={key} key={key}>{translate(`TrueFalseType.${key}`)}</option>);
+								value={localMeterEdits.disableChecks}
+								onChange={e => handleStringChange(e)}>
+								{Object.keys(DisableChecksType).map(key => {
+									return (<option value={key} key={key} >
+										{translate(`DisableChecksType.${key}`)}</option>);
 								})}
 							</Input>
 						</FormGroup></Col>

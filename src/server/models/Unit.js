@@ -19,7 +19,7 @@ class Unit {
 	 * @param {*} preferredDisplay True if this unit is always displayed. If not, the user needs to ask to see (for future enhancement).
 	 * @param {*} note Note about this unit.
 	 */
-	constructor(id, name, identifier = name, unitRepresent, secInRate = 3600, typeOfUnit, suffix = '', displayable, preferredDisplay, note, minVal, maxVal) {
+	constructor(id, name, identifier = name, unitRepresent, secInRate = 3600, typeOfUnit, suffix = '', displayable, preferredDisplay, note, minVal, maxVal, disableChecks) {
 		this.id = id;
 		this.name = name;
 		this.identifier = identifier;
@@ -32,6 +32,7 @@ class Unit {
 		this.note = note;
 		this.minVal = minVal;
 		this.maxVal = maxVal;
+		this.disableChecks = disableChecks;
 	}
 
 	/**
@@ -41,7 +42,7 @@ class Unit {
 	 */
 	static mapRow(row) {
 		return new Unit(row.id, row.name, row.identifier, row.unit_represent, row.sec_in_rate,
-			row.type_of_unit, row.suffix, row.displayable, row.preferred_display, row.note, row.min_val, row.max_val);
+			row.type_of_unit, row.suffix, row.displayable, row.preferred_display, row.note, row.min_val, row.max_val, row.disable_checks);
 	}
 
 	/**
@@ -78,6 +79,15 @@ class Unit {
 	 */
 	static createDisplayableTypesEnum(conn) {
 		return conn.none(sqlFile('unit/create_displayable_types_enum.sql'));
+	}
+
+	/**
+	 * Returns a promise to create the disableChecksType enum of reject_bad, reject_all, and reject_none.
+	 * @param {*} conn The connection to use.
+	 * @returns {Promise.<>}
+	 */
+	static createDisableChecksTypesEnum(conn) {
+		return conn.none(sqlFile('unit/create_disable_checks_types_enum.sql'));
 	}
 
 	/**
@@ -242,6 +252,12 @@ Unit.displayableType = Object.freeze({
 	NONE: 'none',
 	ALL: 'all',
 	ADMIN: 'admin'
+});
+
+Unit.disableChecksType = Object.freeze({
+	REJECT_BAD: 'reject_bad',
+	REJECT_ALL: 'reject_all',
+	REJECT_NONE: 'reject_none'
 });
 
 Unit.unitRepresentType = Object.freeze({

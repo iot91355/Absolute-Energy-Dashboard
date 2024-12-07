@@ -63,7 +63,7 @@ function formatMeterForResponse(meter, hasFullAccess) {
 		minDate: null,
 		maxDate: null,
 		maxError: null,
-		disableChecks: null,
+		disableChecks: meter.disableChecks,
 	};
 
 	// Only logged in Admins can see url, types, timezones, and internal names
@@ -246,7 +246,11 @@ function validateMeterParams(params) {
 			minDate: { type: 'string' },
 			maxDate: { type: 'string' },
 			maxError: { type: 'integer' },
-			disableChecks: { type: 'bool' },
+			disableChecks: {
+				type: 'string',
+				minLength: 1,
+				enum: Object.values(Meter.disableChecksType)
+			}
 		}
 	}
 	const paramsValidationResult = validate(params, validParams);
@@ -262,6 +266,7 @@ router.post('/edit', requiredAdmin('edit meters'), async (req, res) => {
 		const conn = getConnection();
 		try {
 			const meter = await Meter.getByID(req.body.id, conn);
+			console.log(req.body);
 			const updatedMeter = new Meter(
 				undefined, // id
 				req.body.name,

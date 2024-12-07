@@ -3,7 +3,7 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import { GPSPoint } from './calibration';
-import { UnitData, DisplayableType, UnitRepresentType, UnitType, UnitDataById } from '../types/redux/units';
+import { UnitData, DisplayableType, UnitRepresentType, UnitType, UnitDataById, DisableChecksType } from '../types/redux/units';
 import translate from './translate';
 import { LanguageTypes } from 'types/redux/i18n';
 /**
@@ -84,7 +84,8 @@ export const NoUnit: UnitData = {
 	preferredDisplay: false,
 	note: '',
 	minVal: -Infinity,
-	maxVal: Infinity
+	maxVal: Infinity,
+	disableChecks: DisableChecksType.reject_none
 };
 
 /**

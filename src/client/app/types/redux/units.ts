@@ -20,6 +20,11 @@ export enum UnitRepresentType {
 	raw = 'raw'
 }
 
+export enum DisableChecksType {
+	reject_bad = 'reject_bad',
+	reject_all = 'reject_all',
+	reject_none = 'reject_none'
+}
 export interface UnitData {
 	id: number;
 	name: string;
@@ -33,6 +38,7 @@ export interface UnitData {
 	note: string;
 	maxVal: number;
 	minVal: number;
+	disableChecks: DisableChecksType;
 }
 
 // export interface UnitEditData {

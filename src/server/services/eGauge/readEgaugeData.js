@@ -49,7 +49,7 @@ async function readEgaugeData(meter, conn) {
 			maxDate: meter.maxDate,
 			threshold: readingGap,
 			maxError: meter.maxError,
-			disableChecks: meter.disableChecks
+			disableChecks: disableChecks
 		},
 		conn = conn,
 		// eGauge uses Unix timestamps and deals with DST.
