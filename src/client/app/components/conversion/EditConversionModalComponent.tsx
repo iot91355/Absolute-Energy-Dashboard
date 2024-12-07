@@ -63,17 +63,26 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 	};
 	/* End State */
 
+	/**
+	 * Calculates the number of conversions that use a given unit as a source or destination (not both).
+	 * @param unit The unit that is used for calculating the number of conversions.
+	 * @param conversions An array of conversion data objects, each representing a conversion
+	 * @returns The sum of conversions that use the provided unit.
+	 */
 	const getConversionCount = (unit: UnitData, conversions: ConversionData[]) => {
 		let count = 0;
-		if (unit === unitDataById[state.sourceId]) {
-			for (const conversion of Object.values(conversions)) {
-				if (conversion.sourceId === unit.id) {
+		const unitId = unit.id;
+		// If the given unit is a source only count conversions that share the same source.
+		if (unitId === state.sourceId) {
+			for (const conversion of conversions) {
+				if (conversion.sourceId === unitId) {
 					count++;
 				}
 			}
-		} else if (unit === unitDataById[state.destinationId]) {
-			for (const conversion of Object.values(conversions)) {
-				if (conversion.destinationId === unit.id) {
+			// If the given unit is a destination only count conversions that share the same destination.
+		} else if (unitId === state.destinationId) {
+			for (const conversion of conversions) {
+				if (conversion.destinationId === unitId) {
 					count++;
 				}
 			}
@@ -81,6 +90,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 		return count;
 	};
 
+	// Performs checks to warn the admin of the impact deleting a conversion will have on meter units and possible graphing units.
 	const checkState = () => {
 		const source = unitDataById[state.sourceId];
 		const dest = unitDataById[state.destinationId];
@@ -88,16 +98,20 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 		let cancel = false;
 		if (source.typeOfUnit === UnitType.meter) {
 			const srcCount = getConversionCount(source, conversionDetails);
+			const relatedMeters = Object.values(meterDataById).filter(meter => meter.unitId === source.id);
 			if (srcCount === 1) {
-				msg += `${translate('conversion.delete.meter.orphan')} "${unitDataById[state.destinationId].name}".\n`;
+				msg += `${translate('conversion.delete.meter.orphan')} "${dest.name}".\n`;
+				msg += `${translate('conversion.delete.meter.related')} "${source.name}":\n`;
+				relatedMeters.forEach(meter => {
+					msg += `"${meter.name}"\n`;
+				});
+				cancel = true;
 			} else {
-				msg += `${translate('conversion.delete.meter.ungraphable')}\n`;
-				for (const meterId of Object.values(meterDataById)) {
-					if (meterId.unitId === source.id) {
-						msg += `"${meterId.name}"\n`;
-						cancel = true;
-					}
-				}
+				msg += `${translate('conversion.delete.meter.related')} "${source.name}":\n`;
+				relatedMeters.forEach(meter => {
+					msg += `"${meter.name}"\n`;
+				});
+				msg += `${translate('conversion.delete.meter.ungraphable')} "${source.name}".\n`;
 			}
 		} else if (source.typeOfUnit === UnitType.suffix) {
 			const srcCount = getConversionCount(source, conversionDetails);
@@ -107,16 +121,18 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 		} else if (source.typeOfUnit === UnitType.unit && dest.typeOfUnit === UnitType.unit) {
 			const destCount = getConversionCount(dest, conversionDetails);
 			if (destCount === 1) {
-				msg += `${translate('conversion.delete.unit.orphan')} "${unitDataById[state.destinationId].name}".\n`;
+				msg += `${translate('conversion.delete.unit.orphan')} "${dest.name}".\n`;
 			}
 			if (state.bidirectional) {
 				const srcCount = getConversionCount(source, conversionDetails);
 				if (srcCount === 1) {
-					msg += `${translate('conversion.delete.unit.orphan')} "${unitDataById[state.destinationId].name}".\n`;
+					msg += `${translate('conversion.delete.unit.orphan')} "${dest.name}".\n`;
 				}
 			}
 			if (msg === '') {
 				msg += `${translate('conversion.delete.unit')}\n`;
+				// TODO: Check after deleting the conversion to see if a change happens.
+				// 		 Notify the admin of any consequences caused by deleting the conversion.
 			}
 		}
 
