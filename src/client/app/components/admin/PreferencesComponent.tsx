@@ -8,7 +8,7 @@ import { FormattedMessage } from 'react-intl';
 import { Button, Input } from 'reactstrap';
 import { UnsavedWarningComponent } from '../UnsavedWarningComponent';
 import { preferencesApi } from '../../redux/api/preferencesApi';
-import { PreferenceRequestItem, TrueFalseType } from '../../types/items';
+import { PreferenceRequestItem } from '../../types/items';
 import { ChartTypes } from '../../types/redux/graph';
 import { LanguageTypes } from '../../types/redux/i18n';
 import { AreaUnitType } from '../../utils/getAreaUnitConversion';
@@ -16,6 +16,7 @@ import { showErrorNotification, showSuccessNotification } from '../../utils/noti
 import { useTranslate } from '../../redux/componentHooks';
 import TimeZoneSelect from '../TimeZoneSelect';
 import { defaultAdminState } from '../../redux/slices/adminSlice';
+import { DisableChecksType } from '../../types/redux/units';
 
 
 // TODO: Add warning for invalid data
@@ -219,8 +220,8 @@ export default function PreferencesComponent() {
 					type='select'
 					value={localAdminPref.defaultMeterDisableChecks?.toString()}
 					onChange={e => makeLocalChanges('defaultMeterDisableChecks', e.target.value)}>
-					{Object.keys(TrueFalseType).map(key => {
-						return (<option value={key} key={key}>{translate(`TrueFalseType.${key}`)}</option>);
+					{Object.keys(DisableChecksType).map(key => {
+						return (<option value={key} key={key}>{translate(`DisableChecksType.${key}`)}</option>);
 					})}
 				</Input>
 			</div>
