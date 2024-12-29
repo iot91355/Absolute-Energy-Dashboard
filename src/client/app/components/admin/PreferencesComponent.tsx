@@ -12,7 +12,7 @@ import { preferencesApi } from '../../redux/api/preferencesApi';
 import {
 	MIN_DATE, MIN_DATE_MOMENT, MAX_DATE, MAX_DATE_MOMENT, MAX_VAL, MIN_VAL, MAX_ERRORS
 } from '../../redux/selectors/adminSelectors';
-import { PreferenceRequestItem, TrueFalseType } from '../../types/items';
+import { PreferenceRequestItem } from '../../types/items';
 import { ChartTypes } from '../../types/redux/graph';
 import { LanguageTypes } from '../../types/redux/i18n';
 import { AreaUnitType } from '../../utils/getAreaUnitConversion';
