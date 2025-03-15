@@ -681,6 +681,13 @@ async function processData(rows, meterID, timeSort = MeterTimeSortTypesJS.increa
 
 			// Mark readings as not okay since some were dropped
 			isAllReadingsOk = false;
+
+			if (result.length === 0) {
+				// If no readings are added then return since don't want to update
+				// readings nor the time stamps in this case.
+				// Note catches case if reject_bad removes them all.
+				return { result, isAllReadingsOk, msgTotal };
+			}
 		}
 	}
 	// Update the meter to contain information for the last reading in the data file.
