@@ -314,14 +314,6 @@ class Meter {
 	}
 
 	/**
-	 * Returns a promise to create the disableChecksType enum of reject_bad, reject_all, and reject_none.
-	 * @param {*} conn The connection to use.
-	 * @returns {Promise.<>}
-	 */
-	static createDisableChecksTypesEnum(conn) {
-		return conn.none(sqlFile('unit/create_disable_checks_types_enum.sql'));
-	}
-	/**
 	 * Makes the given meter valid.
 	 * @param {*} meter The meter.
 	 */
