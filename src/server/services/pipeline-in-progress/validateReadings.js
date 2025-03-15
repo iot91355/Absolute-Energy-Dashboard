@@ -152,33 +152,31 @@ function checkIntervals(arrayToValidate, threshold, meterIdentifier) {
 	let validIntervals = true;
 	let errMsg = '';
 
-	if (threshold === null) {
-		return { validIntervals, errMsg };
-	}
+	if (threshold !== null) {
+		// Set the expected interval to be the time gap between the first 2 data points
+		const interval = arrayToValidate[1].startTimestamp.diff(arrayToValidate[0].endTimestamp, 'seconds');
+		let lastTime = arrayToValidate[1].endTimestamp;
 
-	// Set the expected interval to be the time gap between the first 2 data points
-	const interval = arrayToValidate[1].startTimestamp.diff(arrayToValidate[0].endTimestamp, 'seconds');
-	let lastTime = arrayToValidate[1].endTimestamp;
-
-	// Calculate the time gap between every pair of consecutive data points
-	let readingNumber = 0;
-	for (const reading of arrayToValidate) {
-		readingNumber++;
-		if (reading === arrayToValidate[0]) {
-			continue;
+		// Calculate the time gap between every pair of consecutive data points
+		let readingNumber = 0;
+		for (const reading of arrayToValidate) {
+			readingNumber++;
+			if (reading === arrayToValidate[0]) {
+				continue;
+			}
+			const currGap = reading.startTimestamp.diff(lastTime, 'seconds');
+			// Compare the current time gap with the expected interval. Terminate if the difference is larger than the accepted threshold
+			if (Math.abs(currGap - interval) > threshold) {
+				const newErrMsg = `warning when checking reading gap for #${readingNumber} on meter ${meterIdentifier}: ` +
+					`time gap is detected between current start time ${reading.startTimestamp} and previous end time ${lastTime} that exceeds threshold of ${threshold} ` +
+					`with current reading ${reading.reading} and endTimestamp ${reading.endTimestamp}`;
+				log.error(newErrMsg);
+				errMsg += '<br>' + newErrMsg + '<br>';
+				validIntervals = false;
+				break;
+			}
+			lastTime = reading.endTimestamp;
 		}
-		const currGap = reading.startTimestamp.diff(lastTime, 'seconds');
-		// Compare the current time gap with the expected interval. Terminate if the difference is larger than the accepted threshold
-		if (Math.abs(currGap - interval) > threshold) {
-			const newErrMsg = `warning when checking reading gap for #${readingNumber} on meter ${meterIdentifier}: ` +
-				`time gap is detected between current start time ${reading.startTimestamp} and previous end time ${lastTime} that exceeds threshold of ${threshold} ` +
-				`with current reading ${reading.reading} and endTimestamp ${reading.endTimestamp}`;
-			log.error(newErrMsg);
-			errMsg += '<br>' + newErrMsg + '<br>';
-			validIntervals = false;
-			break;
-		}
-		lastTime = reading.endTimestamp;
 	}
 	return { validIntervals, errMsg };
 }
