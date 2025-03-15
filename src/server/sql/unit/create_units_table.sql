@@ -14,6 +14,6 @@ CREATE TABLE IF NOT EXISTS units (
 	preferred_display BOOLEAN NOT NULL,
 	note TEXT,
 	min_val FLOAT NOT NULL DEFAULT -9007199254740991,
-    max_val FLOAT NOT NULL DEFAULT 9007199254740991 CHECK (max_val >= min_val),
-	disable_checks disable_checks_type NOT NULL DEFAULT 'reject_none'
+	max_val FLOAT NOT NULL DEFAULT 9007199254740991 CHECK (max_val >= min_val),
+	disable_checks disable_checks_type NOT NULL DEFAULT 'reject_all'
 );

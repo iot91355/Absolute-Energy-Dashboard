@@ -4,5 +4,6 @@
 
 ALTER TABLE units
     DROP COLUMN IF EXISTS default_meter_minimum_value,
-    DROP COLUMN IF EXISTS default_meter_maximum_value
+    DROP COLUMN IF EXISTS default_meter_maximum_value,
+    DROP COLUMN IF EXISTS default_meter_disable_checks
 ;
