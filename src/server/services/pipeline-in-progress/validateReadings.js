@@ -73,7 +73,7 @@ function checkDate(arrayToValidate, minDate, maxDate, maxError, meterIdentifier)
 				break;
 			}
 			if (reading.startTimestamp < minDate) {
-				const newErrMsg = `error when checking reading time for #${readingNumber} on meter ${meterIdentifier}: ` +
+				const newErrMsg = `Error when checking reading time for #${readingNumber} on meter ${meterIdentifier}: ` +
 					`time ${reading.startTimestamp} is earlier than lower bound ${minDate} ` +
 					`with reading ${reading.reading} and endTimestamp ${reading.endTimestamp}`;
 				log.error(newErrMsg);
@@ -83,7 +83,7 @@ function checkDate(arrayToValidate, minDate, maxDate, maxError, meterIdentifier)
 				rejectedDates.push(reading);
 			}
 			if (reading.endTimestamp > maxDate) {
-				const newErrMsg = `error when checking reading time for #${readingNumber} on meter ${meterIdentifier}: ` +
+				const newErrMsg = `Error when checking reading time for #${readingNumber} on meter ${meterIdentifier}: ` +
 					`time ${reading.endTimestamp} is later than upper bound ${maxDate} ` +
 					`with reading ${reading.reading} and startTimestamp ${reading.startTimestamp}`;
 				log.error(newErrMsg);
@@ -118,7 +118,7 @@ function checkValue(arrayToValidate, minVal, maxVal, maxError, meterIdentifier) 
 			break;
 		}
 		if (reading.reading < minVal) {
-			const newErrMsg = `error when checking reading value for #${readingNumber} on meter ${meterIdentifier}: ` +
+			const newErrMsg = `Error when checking reading value for #${readingNumber} on meter ${meterIdentifier}: ` +
 				`value ${reading.reading} is smaller than lower bound ${minVal} ` +
 				`with startTimestamp ${reading.startTimestamp} and endTimestamp ${reading.endTimestamp}`;
 			log.error(newErrMsg);
@@ -127,7 +127,7 @@ function checkValue(arrayToValidate, minVal, maxVal, maxError, meterIdentifier) 
 			validValues = false;
 			rejectedValues.push(reading);
 		} else if (reading.reading > maxVal) {
-			const newErrMsg = `error when checking reading value for #${readingNumber} on meter ${meterIdentifier}: ` +
+			const newErrMsg = `Error when checking reading value for #${readingNumber} on meter ${meterIdentifier}: ` +
 				`value ${reading.reading} is larger than upper bound ${maxVal} ` +
 				`with startTimestamp ${reading.startTimestamp} and endTimestamp ${reading.endTimestamp}`;
 			log.error(newErrMsg);

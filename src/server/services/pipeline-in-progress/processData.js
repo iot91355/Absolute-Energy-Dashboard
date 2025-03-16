@@ -65,7 +65,7 @@ async function processData(rows, meterID, timeSort = MeterTimeSortTypesJS.increa
 	// If all readings were accepted or not.
 	let isAllReadingsOk = true;
 	// If processData is successfully finished then return result = [R0, R1, R2...RN]
-	const result = [];
+	let result = [];
 	// Tell all readings that will not be added to DB.
 	const readingsDropped = [];
 	// Usually holds current message(s) that are yet to be added to msgTotal.
@@ -665,19 +665,20 @@ async function processData(rows, meterID, timeSort = MeterTimeSortTypesJS.increa
 		({ msgTotal, msgTotalWarning } = appendMsgTotal(msgTotal, newErrMsg, msgTotalWarning));
 
 		if (!validReadings) {
-			errMsg = `<h2>For meter ${meterName}: error when validating data so all readings are rejected</h2>`;
-			log.error(errMsg);
-			({ msgTotal, msgTotalWarning } = appendMsgTotal(msgTotal, errMsg, msgTotalWarning));
-
+			errMsg = `<h2>For meter ${meterName}: Error when validating data where `;
 			// Handle 'reject_bad' specifically
 			if (conditionSet['disableChecks'] === 'reject_bad') {
+				errMsg += `only bad readings are rejected</h2>`;
 				// This removes invalid readings but keeps the valid ones.
 				result = result.filter(reading => validateSingleReading(reading, conditionSet));
 			} else {
 				// Default behavior: reject all readings
+				errMsg += `all readings are rejected</h2>`;
 				// Empties the result array
 				result.splice(0, result.length);
 			}
+			log.error(errMsg);
+			({ msgTotal, msgTotalWarning } = appendMsgTotal(msgTotal, errMsg, msgTotalWarning));
 
 			// Mark readings as not okay since some were dropped
 			isAllReadingsOk = false;
