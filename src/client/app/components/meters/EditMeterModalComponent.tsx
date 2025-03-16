@@ -67,19 +67,6 @@ export default function EditMeterModalComponent(props: EditMeterModalComponentPr
 
 	const [validMeter, setValidMeter] = useState(isValidMeter(localMeterEdits));
 
-	// Ensure `minVal`, `maxVal` and `disableChecks` are set based on the unit on load
-	useEffect(() => {
-		const selectedUnit = unitDataById[localMeterEdits.unitId];
-		if (selectedUnit) {
-			setLocalMeterEdits(edits => ({
-				...edits,
-				minVal: selectedUnit.minVal,
-				maxVal: selectedUnit.maxVal,
-				disableChecks: selectedUnit.disableChecks
-			}));
-		}
-	}, [localMeterEdits.unitId]);
-
 	useEffect(() => { setValidMeter(isValidMeter(localMeterEdits)); }, [localMeterEdits]);
 	/* End State */
 
@@ -95,7 +82,10 @@ export default function EditMeterModalComponent(props: EditMeterModalComponentPr
 		if (selectedUnit) {
 			setLocalMeterEdits({
 				...localMeterEdits,
-				unitId: selectedUnitId
+				unitId: selectedUnitId,
+				minVal: selectedUnit.minVal,
+				maxVal: selectedUnit.maxVal,
+				disableChecks: selectedUnit.disableChecks
 			});
 		}
 	};
