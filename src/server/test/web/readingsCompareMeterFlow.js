@@ -309,6 +309,66 @@ mocha.describe('readings API', () => {
 				// Add C19 here
 
 				// Add C20 here
+				mocha.it('C20: 28 day shift end 2022-10-31 17:12:34 (partial hour) for 15 minute reading intervals and quantity units & kWh as kWh', async () =>{
+					unitData = [ 
+						{
+							//u4
+							name: 'kW',
+							identifier: '',
+							unitRepresent: Unit.unitRepresentType.FLOW,
+							secInRate: 3600,
+							typeOfUnit: Unit.unitType.UNIT,
+							suffix: '',
+							displayable: Unit.displayableType.ALL,
+							preferredDisplay: true,
+							note: 'kilowatts'
+						},
+						{
+							//u5
+							name: 'Electric',
+							identifier: '',
+							unitRepresent: Unit.unitRepresentType.FLOW,
+							secInRate: 3600,
+							typeOfUnit: Unit.unitType.METER,
+							suffix: '',
+							displayable: Unit.displayableType.NONE,
+							preferredDisplay: false,
+							note: 'special unit'
+						},
+					];
+					conversionData = [
+						{
+							//c4
+							sourceName: 'Electric',
+							destinationName: 'kW',
+							bidirectional: false,
+							slope: 1,
+							intercept: 0,
+							note: 'Electric → kW'
+						}
+					];
+
+					const meterData = [
+						{
+							name: 'Electric kW',
+							unit: 'Electric',
+							defaultGraphicUnit: 'kW',
+							displayable: true,
+							gps: undefined,
+							note: 'special meter',
+							file: 'test/web/readingsData/readings_ri_15_days_75.csv',
+							deleteFile: false,
+							readingFrequency: '15 minutes',
+							id: METER_ID
+						}
+					];
+
+
+					expectCompareToEqualExpected(res, expected, METER_ID);
+
+				});
+
+
 			});
 		});
 	});
