@@ -307,6 +307,73 @@ mocha.describe('readings API', () => {
 				});
 	
 				// Add C19 here
+				mocha.it('C19: 7 day shift end 2022-11-01 15:00:00 (beyond data) for 15 minute reading intervals and quantity units & kWh as kWh', async () => {
+					const unitData = [
+						{
+							// u4
+							name: 'kW',
+							identifier: '',
+							unitRepresent: Unit.unitRepresentType.FLOW,
+							secInRate: 3600,
+							typeOfUnit: Unit.unitType.UNIT,
+							suffix: '',
+							displayable: Unit.displayableType.ALL,
+							preferredDisplay: true,
+							note: 'kilowatts'
+						},
+						{
+							// u5
+							name: 'Electric',
+							identifier: '',
+							unitRepresent: Unit.unitRepresentType.FLOW,
+							secInRate: 3600,
+							typeOfUnit: Unit.unitType.METER,
+							suffix: '',
+							displayable: Unit.displayableType.NONE,
+							preferredDisplay: false,
+							note: 'special unit'
+						}
+					];
+					const conversionData = [
+						{
+							// c4
+							sourceName: 'Electric',
+							destinationName: 'kW',
+							bidirectional: false,
+							slope: 1,
+							intercept: 0,
+							note: 'Electric → kW'
+						}
+					];
+					const meterData = [
+						{
+							name: 'Electric kW',
+							unit: 'Electric',
+							defaultGraphicUnit: 'kW',
+							displayable: true,
+							gps: undefined,
+							note: 'special meter',
+							file: 'test/web/readingsData/readings_ri_15_days_75.csv',
+							deleteFile: false,
+							readingFrequency: '15 minutes',
+							id: METER_ID
+						}
+					];
+					await prepareTest(unitData, conversionData, meterData);
+					const unitId = await getUnitId('kW');
+					const expected = [2283.20315493009, 3286.9345597083];
+
+					const res = await chai.request(app)
+						.get(`/api/compareReadings/meters/${METER_ID}`)
+						.query({
+							curr_start: '2022-10-30 00:00:00',
+							curr_end: '2022-11-01 15:00:00',
+							shift: 'P7D',
+							graphicUnitId: unitId
+						});
+
+					expectCompareToEqualExpected(res, expected);
+				});
 
 				// Add C20 here
 			});
