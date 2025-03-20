@@ -374,6 +374,8 @@ mocha.describe('readings API', () => {
 							shift: 'P28D',
 							graphicUnitId: unitId
 						});
+					
+					expectCompareToEqualExpected(res, expected, METER_ID);
 			});
 		});
 	});
