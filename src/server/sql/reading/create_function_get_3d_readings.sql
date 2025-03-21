@@ -9,6 +9,7 @@ not exceed the start/end times for the readings in the supplied meter. This can 
 because infinity is used to indicate to graph all readings. This version does it to the nearest
 day by using the day reading view and is used by 3D readings which only allow days and a single meter.
  */
+ -- By indexing both columns together, the database can efficiently handle queries that involve both meter_id and time_interval
  CREATE INDEX IF NOT EXISTS idx_hourly_readings_unit_meter_time
 ON hourly_readings_unit (meter_id, lower(time_interval));
 
