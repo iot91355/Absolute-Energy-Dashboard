@@ -376,6 +376,7 @@ mocha.describe('readings API', () => {
 						});
 					
 					expectCompareToEqualExpected(res, expected, METER_ID);
+				});
 			});
 		});
 	});
