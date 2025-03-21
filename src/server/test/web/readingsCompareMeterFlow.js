@@ -302,8 +302,8 @@ mocha.describe('readings API', () => {
 							graphicUnitId: unitId
 						});
 					
-					expectCompareToEqualExpected(res, expected, METER_ID);
-
+						expectCompareToEqualExpected(res, expected, METER_ID);
+					});
 				});
 	
 				// Add C19 here
