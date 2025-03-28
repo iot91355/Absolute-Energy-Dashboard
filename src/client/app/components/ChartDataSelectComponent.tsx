@@ -3,11 +3,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import * as React from 'react';
-import { MeterOrGroup } from '../types/redux/graph';
+import { ChartTypes, MeterOrGroup } from '../types/redux/graph';
 import MeterAndGroupSelectComponent from './MeterAndGroupSelectComponent';
 import UnitSelectComponent from './UnitSelectComponent';
 import { useAppSelector } from '../redux/reduxHooks';
-import { selectQueryTimeInterval} from '../redux/slices/graphSlice';
+import { selectChartToRender, selectQueryTimeInterval} from '../redux/slices/graphSlice';
 import DateRangeComponent from './DateRangeComponent';
 
 /**
@@ -15,6 +15,7 @@ import DateRangeComponent from './DateRangeComponent';
  * @returns Chart data select element
  */
 export default function ChartDataSelectComponent() {
+	const chartToRender = useAppSelector(selectChartToRender);
 	const queryTimeInterval = useAppSelector(selectQueryTimeInterval);
 	const isBounded = queryTimeInterval.getIsBounded();
 
@@ -23,7 +24,7 @@ export default function ChartDataSelectComponent() {
 			<MeterAndGroupSelectComponent meterOrGroup={MeterOrGroup.groups} />
 			<MeterAndGroupSelectComponent meterOrGroup={MeterOrGroup.meters} />
 			<UnitSelectComponent />
-			{isBounded && <DateRangeComponent />}
+			{(isBounded && chartToRender !== ChartTypes.threeD && chartToRender !== ChartTypes.compareLine) && <DateRangeComponent />}
 		</div>
 	);
 }
