@@ -3,8 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
  */
 -- By indexing both columns together, the database can efficiently handle queries that involve both meter_id and time_interval
-CREATE INDEX IF NOT EXISTS idx_hourly_readings_unit_meter_time-- was created to support the usage of the view by 3d
+--created to support the usage of the view by 3d
+CREATE INDEX IF NOT EXISTS idx_hourly_readings_unit_meter_time
 ON hourly_readings_unit (meter_id, lower(time_interval));
+
 $$ LANGUAGE 'plpgsql';
 -- Gets meters graphing data for 3D graphic by returning points that span the requestedS
 -- length of time over the days requested. This function can be slower than line readings
@@ -65,6 +67,7 @@ BEGIN
     END IF;
     -- Hours per reading determined returned as an interval.
     reading_length_interval := (reading_length_hours_use::TEXT || ' hour')::INTERVAL;
+
 	-- Loop over all meters.
 	WHILE current_meter_index <= cardinality(meter_ids_requested) LOOP
         -- ID of the current meter in loop
