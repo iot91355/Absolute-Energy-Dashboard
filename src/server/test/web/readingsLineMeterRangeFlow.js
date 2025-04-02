@@ -15,9 +15,8 @@ const { prepareTest,
     getUnitId,
     ETERNITY,
     METER_ID } = require('../../util/readingsUtils');
-const { timeInterval } = require('d3');
 
-const rdPath = 'test/web/readingsData/';
+const rdPath = 'src/server/test/web/readingsData/';
 
 mocha.describe('readings API', () => {
     mocha.describe('readings test, test if data returned by API is as expected', () => {
@@ -75,7 +74,7 @@ mocha.describe('readings API', () => {
                         }
                     ];
 
-                    await prepairTest(unitData, conversionData, meterData);
+                    await prepareTest(unitData, conversionData, meterData);
 
                     const unitId = await getUnitId('kW');
                     const expected = await parseExpectedCsv(`${rdPath}expected_line_range_ri_15_mu_kW_gu_kW_st_-inf_et_inf.csv`)
