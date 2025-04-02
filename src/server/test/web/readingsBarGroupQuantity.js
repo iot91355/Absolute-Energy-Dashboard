@@ -542,7 +542,6 @@ mocha.describe('readings API', () => {
                     expectReadingToEqualExpected(res, expected, GROUP_ID);
                 });
 
-                // Add BG14 here
                 mocha.it('BG14: 1 day bars for 15 + 20 minute reading intervals and quantity units with +-inf start/end time & kWh as lbs of CO2 & chained & reversed', async () => {
                     const unitData = unitDatakWh.concat([
                         { 
