@@ -2,13 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
  */
--- By indexing both columns together, the database can efficiently handle queries that involve both meter_id and time_interval
---created to support the usage of the view by 3d
+
+-- By indexing both columns together, the database can efficiently handle queries that involve both meter_id and time_interval.
+-- Created to support the usage of the view by 3d.
 CREATE INDEX IF NOT EXISTS idx_hourly_readings_unit_meter_time
 ON hourly_readings_unit (meter_id, lower(time_interval));
 
-$$ LANGUAGE 'plpgsql';
--- Gets meters graphing data for 3D graphic by returning points that span the requestedS
+-- Gets meters graphing data for 3D graphic by returning points that span the requested
 -- length of time over the days requested. This function can be slower than line readings
 -- so is designed to be called for one year or less of data.
 CREATE OR REPLACE FUNCTION meter_3d_readings_unit (
@@ -72,6 +72,7 @@ BEGIN
 	WHILE current_meter_index <= cardinality(meter_ids_requested) LOOP
         -- ID of the current meter in loop
         current_meter_id := meter_ids_requested[current_meter_index];
+
         -- Get the conversion from the current meter's unit to the desired graphing unit.
         SELECT c.slope, c.intercept into slope, intercept
         FROM meters m
@@ -82,10 +83,6 @@ BEGIN
         -- First make requested range only be full days by dropping any partial days at start/end.
         requested_range := shrink_tsrange_to_meter_readings_by_day(tsrange(date_trunc_up('day', start_stamp), date_trunc('day', end_stamp)), current_meter_id);
 
-        -- This currently does a special case if you want every hour since there is no need to
-        -- do the generate_series since that case aligns with the hourly table.
-        -- The more general code is currently slower than desired so doing this.
-        -- TODO Can we optimize the code so this is not needed or the slowdown is less?
         IF (reading_length_hours_use <= 12) THEN
             -- Need to generate_series to group the desired hours together
             RETURN QUERY
@@ -105,7 +102,7 @@ BEGIN
                 -- is inclusive.
                 FROM (
                     SELECT hour
-                    FROM generate_series( 
+                    FROM generate_series(
                         lower(requested_range),
                         upper(requested_range) - reading_length_interval,
                         reading_length_interval
@@ -135,6 +132,7 @@ BEGIN
                 SELECT -999, -999::FLOAT, '1900-01-01 00:00:00'::TIMESTAMP, '1900-01-01 00:00:00'::TIMESTAMP + reading_length_interval
             ;
         END IF;
+
         -- Go to the next meter
 		current_meter_index := current_meter_index + 1;
 	END LOOP;
