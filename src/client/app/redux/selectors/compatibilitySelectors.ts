@@ -45,6 +45,7 @@ export const selectUnitsCompatibleWithUnit = createAppSelector(
 //Can't call selector in selector because it relies on some data that is computed during the selector call. and also in a loop
 //I tried out something else on the selectCompatibleUnits selector which is refactored from getCompatibleUnits.
 //If that seems ok, I will do the same here.
+//I also still struggle to get how selector as a dependency works. Especially when the dependent selector need an extra argument.
 /**
  * Takes a set of meter ids and returns the set of compatible unit ids.
  * @param _state the Redux state.
