@@ -3,9 +3,9 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 import * as React from 'react';
 // Realize that * is already imported from react
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FormattedMessage } from 'react-intl';
-import { Button, Col, Container, FormGroup, Input, Label, Modal, ModalBody, ModalFooter, ModalHeader, Row } from 'reactstrap';
+import { Button, Col, Container, FormGroup, FormFeedback, Input, Label, Modal, ModalBody, ModalFooter, ModalHeader, Row } from 'reactstrap';
 import TooltipHelpComponent from '../TooltipHelpComponent';
 import { conversionsApi, selectConversionsDetails } from '../../redux/api/conversionsApi';
 import { selectMeterDataById } from '../../redux/api/metersApi';
@@ -50,12 +50,27 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 	// Handlers for each type of input change
 	const [state, setState] = useState(values);
 
+	// Tracks whether to show the bidirectional error message
+	const [showBidirectionalError, setShowBidirectionalError] = useState(false);
+
+	// Tracks the type of source unit
+	const sourceUnit = unitDataById[state.sourceId];
+
+	useEffect(() => {
+		const isMeter = sourceUnit?.typeOfUnit === UnitType.meter;
+		setShowBidirectionalError(isMeter && state.bidirectional);
+	}, [state.bidirectional, sourceUnit]);
+
 	const handleStringChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setState({ ...state, [e.target.name]: e.target.value });
 	};
 
 	const handleBooleanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		setState({ ...state, [e.target.name]: JSON.parse(e.target.value) });
+		const value = JSON.parse(e.target.value);
+		setState({ ...state, [e.target.name]: value });
+		if (e.target.name === 'bidirectional') {
+			setShowBidirectionalError(sourceUnit?.typeOfUnit === UnitType.meter && value);
+		}
 	};
 
 	const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -223,6 +238,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 	// Failure to edit conversions will not trigger a re-render, as no state has changed. Therefore, we must manually reset the values
 	const resetState = () => {
 		setState(values);
+		setShowBidirectionalError(false);
 	};
 
 	const handleShow = () => {
@@ -251,8 +267,9 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 		const conversionHasChanges = shouldRedoCik || props.conversion.note != state.note;
 		// Only do work if there are changes
 		if (conversionHasChanges) {
+			const isMeter = sourceUnit?.typeOfUnit === UnitType.meter;
 			// Save our changes
-			editConversion({ conversionData: state, shouldRedoCik });
+			editConversion({ conversionData: { ...state, bidirectional: isMeter ? false : state.bidirectional }, shouldRedoCik });
 		}
 	};
 
@@ -327,11 +344,18 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 								name='bidirectional'
 								type='select'
 								defaultValue={state.bidirectional.toString()}
-								onChange={e => handleBooleanChange(e)}>
+								onChange={e => handleBooleanChange(e)}
+								invalid={showBidirectionalError}>
 								{Object.keys(TrueFalseType).map(key => {
 									return (<option value={key} key={key}>{translate(`TrueFalseType.${key}`)}</option>);
 								})}
 							</Input>
+							{showBidirectionalError && (
+								<FormFeedback className='d-block'>
+									<FormattedMessage id="conversion.bidirectional.disabled.meter"
+										defaultMessage="Selecting meter units as sources will set bidirectional to false."/>
+								</FormFeedback>
+							)}
 						</FormGroup>
 						<Row xs='1' lg='2'>
 							<Col>
