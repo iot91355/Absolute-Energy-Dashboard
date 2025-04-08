@@ -229,7 +229,7 @@ export default function CreateGroupModalComponent() {
 		// Can only vary if admin and only used then.
 		// This is the current deep meters of this group including any changes.
 		// The id is not really needed so set to -1 since same function for edit.
-		const groupDeepMeter = metersInChangedGroup(state);
+		const groupDeepMeter = metersInChangedGroup(state, groupDataById);
 		// Get meters that okay for this group in a format the component can display.
 		const possibleMeters = getMeterMenuOptionsForGroup(state.defaultGraphicUnit, groupDeepMeter, locale);
 		// Get groups okay for this group. Similar to meters.
@@ -425,7 +425,7 @@ export default function CreateGroupModalComponent() {
 									// Get the currently included/selected meters as an array of the ids.
 									const updatedChildMeters = newSelectedMeterOptions.map(meter => { return meter.value; });
 									// The id is not really needed so set to -1 since same function for edit.
-									const newDeepMeters = metersInChangedGroup({ ...state, childMeters: updatedChildMeters, id: -1 });
+									const newDeepMeters = metersInChangedGroup({ ...state, childMeters: updatedChildMeters, id: -1 }, groupDataById);
 									// The choice may have invalidated the default graphic unit so it needs
 									// to be reset to no unit.
 									// The selection encodes this information in the color but recalculate
@@ -461,7 +461,7 @@ export default function CreateGroupModalComponent() {
 								// Get the currently included/selected meters as an array of the ids.
 								const updatedChildGroups = newSelectedGroupOptions.map(group => { return group.value; });
 								// The id is not really needed so set to -1 since same function for edit.
-								const newDeepMeters = metersInChangedGroup({ ...state, childGroups: updatedChildGroups, id: -1 });
+								const newDeepMeters = metersInChangedGroup({ ...state, childGroups: updatedChildGroups, id: -1 }, groupDataById);
 								// The choice may have invalidated the default graphic unit so it needs
 								// to be reset to no unit.
 								// The selection encodes this information in the color but recalculate

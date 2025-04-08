@@ -78,7 +78,7 @@ export const selectCurrentUnitCompatibility = createAppSelector(
 				else {
 					// Get the set of units compatible with the current group (through its deepMeters attribute)
 					// TODO If a meter in a group is not visible to this user then it is not in Redux state and this fails.
-					const compatibleUnits = unitsCompatibleWithMeters(metersInGroup(groupId));
+					const compatibleUnits = unitsCompatibleWithMeters(metersInGroup(groupId, groupDataById));
 					compatibleUnits.has(selectedUnitId) ? compatibleGroups.add(groupId) : incompatibleGroups.add(groupId);
 				}
 			});
@@ -293,9 +293,10 @@ export const selectUnitSelectData = createAppSelector(
 		selectSelectedMeters,
 		selectSelectedGroups,
 		selectGraphAreaNormalization,
-		selectSelectedLanguage
+		selectSelectedLanguage,
+		selectGroupDataById
 	],
-	(unitDataById, visibleUnitsOrSuffixes, selectedMeters, selectedGroups, areaNormalization, selectSelectedLanguage) => {
+	(unitDataById, visibleUnitsOrSuffixes, selectedMeters, selectedGroups, areaNormalization, selectSelectedLanguage, groupDataById) => {
 		// Holds all units that are compatible with selected meters/groups
 		const compatibleUnits = new Set<number>();
 		// Holds all units that are not compatible with selected meters/groups
@@ -311,7 +312,7 @@ export const selectUnitSelectData = createAppSelector(
 		// Get for all groups
 		selectedGroups.forEach(group => {
 			// Get for all deep meters in group
-			metersInGroup(group).forEach(meter => {
+			metersInGroup(group, groupDataById).forEach(meter => {
 				allSelectedMeters.add(meter);
 			});
 		});

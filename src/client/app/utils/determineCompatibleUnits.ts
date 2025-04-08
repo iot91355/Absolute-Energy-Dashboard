@@ -6,7 +6,7 @@
 import { get } from 'lodash';
 import React from 'react';
 import { selectCik } from '../redux/api/conversionsApi';
-import { selectAllGroups, selectGroupDataById } from '../redux/api/groupsApi';
+import { selectAllGroups} from '../redux/api/groupsApi';
 import { selectAllMeters, selectMeterDataById } from '../redux/api/metersApi';
 import { store } from '../store';
 import { DataType } from '../types/Datasources';
@@ -89,49 +89,45 @@ export function unitsCompatibleWithUnit(unitId: number): Set<number> {
 }
 
 /**
- * Returns the set of meters's ids associated with the groupId used where Redux
- * state is accurate for all groups.
+ * Returns the set of meters' ids associated with the groupId using the provided groupDataById.
  * @param groupId The groupId.
+ * @param groupDataById The group data from Redux state.
  * @returns The set of deep children of this group.
  */
-export function metersInGroup(groupId: number): Set<number> {
-	const state = store.getState();
+export function metersInGroup(groupId: number, groupDataById: Record<number, GroupData>): Set<number> {
 	// Gets the group associated with groupId.
-	// The deep children are automatically fetched with group state so should exist.
-	const groupDataById = selectGroupDataById(state);
 	const group = get(groupDataById, groupId);
 	// Create a set of the deep meters of this group and return it.
-	// null group can break on startup without optional chain
-	return new Set(group?.deepMeters);
+	return new Set(group?.deepMeters || []);
 }
 
 /**
  * Returns array of deep meter ids of the changed group. This only works if all other groups in state
  * do not include this group.
- * @param changedGroupState The state for the changed group
- * @returns array of deep meter ids of the changed group considering possible changes
+ * @param changedGroupState The state for the changed group.
+ * @param groupDataById The group data from Redux state.
+ * @returns Array of deep meter ids of the changed group considering possible changes.
  */
-export function metersInChangedGroup(changedGroupState: GroupData): number[] {
-	const state = store.getState();
-	const groupDataById = selectGroupDataById(state);
-
-	// deep meters starts with all the direct child meters of the group being changed.
+export function metersInChangedGroup(changedGroupState: GroupData, groupDataById: Record<number, GroupData>): number[] {
+	// Deep meters start with all the direct child meters of the group being changed.
 	const deepMeters = new Set(changedGroupState.childMeters);
-	// These groups cannot contain the group being changed so the redux state is okay.
-	changedGroupState.childGroups.forEach((group: number) => {
+
+	// These groups cannot contain the group being changed, so the Redux state is okay.
+	changedGroupState.childGroups.forEach((groupId: number) => {
 		// The group state for the current child group.
-		const groupState = get(groupDataById, group);
+		const groupState = get(groupDataById, groupId);
 		// The group state might not be defined, e.g., a group delete happened and the state is refreshing.
-		// In this case the deepMeters returned will be off but they should quickly refresh.
+		// In this case, the deepMeters returned will be off but should quickly refresh.
 		if (groupState) {
 			// The deep meters of every group contained in the changed group are in that group.
-			// The set does not allow duplicates so no issue there.
+			// The set does not allow duplicates, so no issue there.
 			groupState.deepMeters.forEach((meter: number) => {
 				deepMeters.add(meter);
 			});
 		}
 	});
-	// Convert set to array.
+
+	// Convert the set to an array.
 	return Array.from(deepMeters);
 }
 
