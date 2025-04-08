@@ -190,16 +190,17 @@ export default function CreateConversionModalComponent() {
 								type='select'
 								onChange={e => handleBooleanChange(e)}
 								value={String(conversionState.bidirectional)}
-								disabled={isMeterSource}>
+								disabled={isMeterSource}
+								invalid={isMeterSource && conversionState.bidirectional === true}>
 								{Object.keys(TrueFalseType).map(key => {
 									return (<option value={key} key={key}>{translate(`TrueFalseType.${key}`)}</option>);
 								})}
 							</Input>
 							{isMeterSource && (
 								<p className='text-muted'>
-									<FormattedMessage 
-										id="conversion.bidirectional.disabled.meter" 
-										defaultMessage="Bidirectional conversions are not allowed for meter units. Automatically set to false."
+									<FormattedMessage
+										id="conversion.bidirectional.disabled.meter"
+										defaultMessage="Meter units will set bidirectional to false."
 									/>
 								</p>
 							)}
