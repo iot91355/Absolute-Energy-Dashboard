@@ -103,10 +103,10 @@ export default function CreateConversionModalComponent() {
 	// Submit
 	const handleSubmit = () => {
 		// Show warning modal if slope and intercept are both 0
-		if (conversionState.slope === 0 && conversionState.intercept === 0){
+		if (conversionState.slope === 0 && conversionState.intercept === 0) {
 			setWarningMessage(translate('conversion.slope.intercept.zero'));
 			setShowWarningModal(true);
-		}else if (validConversion) {
+		} else if (validConversion) {
 			// Close modal first to avoid repeat clicks
 			setShowModal(false);
 			// Add the new conversion and update the store
@@ -129,9 +129,9 @@ export default function CreateConversionModalComponent() {
 			<ConfirmActionModalComponent
 				show={showWarningModal}
 				actionConfirmMessage={warningMessage}
-				handleClose = {handleWarningCancel}
-				actionFunction = {handleWarningConfirm}
-				actionConfirmText= {translate('confirm')}
+				handleClose={handleWarningCancel}
+				actionFunction={handleWarningConfirm}
+				actionConfirmText={translate('confirm')}
 				actionRejectText={translate('cancel')}
 			/>
 			{/* Show modal button */}
