@@ -128,7 +128,6 @@ const pillContainer: React.CSSProperties = {
 	margin: '0px',
 	padding: '0px',
 	minHeight: '100px'
-	//maxHeight: '200px'
 };
 
 const pillBoxLabel: React.CSSProperties = {
@@ -143,7 +142,6 @@ const pillBox: React.CSSProperties = {
 	flexDirection: 'column',
 	justifyContent: 'left',
 	width: '45%',
-	//maxHeight: '100%',
 	maxWidth: '45%',
 	margin: '0px',
 	padding: '0px'
