@@ -127,8 +127,8 @@ const pillContainer: React.CSSProperties = {
 	justifyContent: 'space-between',
 	margin: '0px',
 	padding: '0px',
-	minHeight: '100px',
-	maxHeight: '200px'
+	minHeight: '100px'
+	//maxHeight: '200px'
 };
 
 const pillBoxLabel: React.CSSProperties = {
@@ -143,7 +143,7 @@ const pillBox: React.CSSProperties = {
 	flexDirection: 'column',
 	justifyContent: 'left',
 	width: '45%',
-	maxHeight: '100%',
+	//maxHeight: '100%',
 	maxWidth: '45%',
 	margin: '0px',
 	padding: '0px'
@@ -153,9 +153,9 @@ const pills: React.CSSProperties = {
 	display: 'flex',
 	flexWrap: 'wrap',
 	justifyContent: 'left',
-	maxHeight: '100%',
-	margin: '0px',
-	padding: '0px'
+	overflowY: 'auto',
+	maxHeight: '120px',
+	paddingRight: '8px'
 };
 
 const pill: React.CSSProperties = {
