@@ -178,8 +178,10 @@ export default function EditMeterModalComponent(props: EditMeterModalComponentPr
 					.then(() => {
 						showSuccessNotification(translate('meter.successfully.edited.meter'));
 					})
-					.catch(() => {
-						showErrorNotification(translate('meter.failed.to.edit.meter'));
+					.catch(err => {
+						showErrorNotification(
+							translate('meter.failed.to.edit.meter') + '"' + err.data + '"'
+						);
 					});
 			} else if (error_message) {
 				// Display an error message if there are dependent deep meters and checked.
