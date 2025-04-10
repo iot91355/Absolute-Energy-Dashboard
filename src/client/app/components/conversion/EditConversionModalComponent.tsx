@@ -383,8 +383,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 							</Input>
 							{isMeterSource() && state.bidirectional === true && (
 								<FormFeedback className='d-block'>
-									<FormattedMessage id="conversion.bidirectional.disabled.meter"
-										defaultMessage="Selecting meter units as sources will set bidirectional to false."/>
+									<FormattedMessage id="conversion.bidirectional.disabled.meter"/>
 								</FormFeedback>
 							)}
 						</FormGroup>
