@@ -45,42 +45,27 @@ export default function CreateConversionModalComponent() {
 	// If the currently selected conversion is valid
 	const [validConversion, reason] = useAppSelector(state => selectIsValidConversion(state, conversionState));
 
-	// Tracks whether the source of the conversion is a meter
-	const [isMeterSource, setIsMeterSource] = useState(false);
-
-	// Tracks whether the bidirectional error message should be shown
-	const [showBidirectionalError, setShowBidirectionalError] = useState(false);
-
 	const handleStringChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setConversionState({ ...conversionState, [e.target.name]: e.target.value });
 	};
 
 	const handleBooleanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setConversionState({ ...conversionState, [e.target.name]: JSON.parse(e.target.value) });
-		if (e.target.name === 'bidirectional' && isMeterSource) {
-			setShowBidirectionalError(JSON.parse(e.target.value) === true);
-		}
 	};
 
 	const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		// once a source or destination is selected, it will be removed from the other options.
 		if (e.target.name === 'sourceId') {
-			const selectedID = Number(e.target.value);
-			const selectedSource = defaultValues.sourceOptions.find(u => u.id === selectedID);
-			const isMeter = selectedSource?.typeOfUnit === UnitType.meter;
 			setConversionState(state => ({
 				...state,
-				sourceId: selectedID,
-				destinationOptions: defaultValues.destinationOptions.filter(destination => destination.id !== selectedID)
+				sourceId: Number(e.target.value),
+				destinationOptions: defaultValues.destinationOptions.filter(destination => destination.id !== Number(e.target.value))
 			}));
-			setIsMeterSource(isMeter);
-			setShowBidirectionalError(isMeter && conversionState.bidirectional === true);
 		} else if (e.target.name === 'destinationId') {
-			const selectedID = Number(e.target.value);
 			setConversionState(state => ({
 				...state,
-				destinationId: selectedID,
-				sourceOptions: defaultValues.sourceOptions.filter(source => source.id !== selectedID)
+				destinationId: Number(e.target.value),
+				sourceOptions: defaultValues.sourceOptions.filter(source => source.id !== Number(e.target.value))
 			}));
 		} else {
 			setConversionState(state => ({ ...state, [e.target.name]: Number(e.target.value) }));
@@ -88,11 +73,15 @@ export default function CreateConversionModalComponent() {
 	};
 	/* End State */
 
+	// Determines whether the selected source is of type meter
+	const isMeterSource = () => {
+		const source = defaultValues.sourceOptions.find(u => u.id === conversionState.sourceId);
+		return source?.typeOfUnit === UnitType.meter;
+	};
+
 	// Reset the state to default values
 	const resetState = () => {
 		setConversionState(defaultValues);
-		setIsMeterSource(false);
-		setShowBidirectionalError(false);
 	};
 
 	// Submit
@@ -102,12 +91,8 @@ export default function CreateConversionModalComponent() {
 			setShowModal(false);
 			// Add the new conversion and update the store
 			// Omit the source options , do not need to send in request so remove here.
-			//
-			const submission = {
-				...omit(conversionState, 'sourceOptions'),
-				bidirectional: isMeterSource ? false : conversionState.bidirectional
-			};
-			addConversionMutation(submission);
+			// If source is a meter, make bidirectional false
+			addConversionMutation({...omit(conversionState, 'sourceOptions'), bidirectional: isMeterSource() ? false : conversionState.bidirectional});
 			resetState();
 		} else {
 			showErrorNotification(reason);
@@ -202,12 +187,12 @@ export default function CreateConversionModalComponent() {
 								type='select'
 								onChange={e => handleBooleanChange(e)}
 								value={String(conversionState.bidirectional)}
-								invalid={showBidirectionalError}>
+								invalid={isMeterSource() && conversionState.bidirectional === true}>
 								{Object.keys(TrueFalseType).map(key => {
 									return (<option value={key} key={key}>{translate(`TrueFalseType.${key}`)}</option>);
 								})}
 							</Input>
-							{showBidirectionalError && (
+							{isMeterSource() && conversionState.bidirectional === true && (
 								<FormFeedback className='d-block'>
 									<FormattedMessage
 										id="conversion.bidirectional.disabled.meter"
