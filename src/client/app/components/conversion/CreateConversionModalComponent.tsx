@@ -231,7 +231,7 @@ export default function CreateConversionModalComponent() {
 								type='select'
 								onChange={e => handleBooleanChange(e)}
 								value={String(conversionState.bidirectional)}
-								invalid={isMeterSource() && conversionState.bidirectional === true}>
+								invalid={(isMeterSource() || isSuffixUsed()) && conversionState.bidirectional === true}>
 								{Object.keys(TrueFalseType).map(key => {
 									return (<option value={key} key={key}>{translate(`TrueFalseType.${key}`)}</option>);
 								})}
