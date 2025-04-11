@@ -69,6 +69,13 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 		return source?.typeOfUnit === UnitType.meter;
 	};
 
+	// Determine whether the selected source or destination is a suffix unit
+	const isSuffixUsed = () => {
+		const source = unitDataById[state.sourceId];
+		const dest = unitDataById[state.destinationId];
+		return source?.typeOfUnit === UnitType.suffix || dest?.typeOfUnit === UnitType.suffix;
+	};
+
 	/**
 	 * Calculates the number of conversions that use a given unit as a source or destination (not both).
 	 * @param unit The unit that is used for calculating the number of conversions.
