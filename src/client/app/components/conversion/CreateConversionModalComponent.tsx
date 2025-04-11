@@ -241,6 +241,11 @@ export default function CreateConversionModalComponent() {
 									<FormattedMessage id="conversion.bidirectional.disabled.meter"/>
 								</FormFeedback>
 							)}
+							{isSuffixUsed() && conversionState.bidirectional === true &&  (
+								<FormFeedback className='d=block'>
+									<FormattedMessage id="conversion.bidirectional.disabled.suffix"/>
+								</FormFeedback>
+							)}
 						</FormGroup>
 						<Row xs='1' lg='2'>
 							<Col>
