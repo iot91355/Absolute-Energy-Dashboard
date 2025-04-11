@@ -85,6 +85,13 @@ export default function CreateConversionModalComponent() {
 		return source?.typeOfUnit === UnitType.meter;
 	};
 
+	// Determine whether the selected source or destination is a suffix unit
+	const isSuffixUsed = () => {
+		const source = defaultValues.sourceOptions.find(u => u.id === conversionState.sourceId);
+		const dest = defaultValues.sourceOptions.find(u => u.id === conversionState.destinationId);
+		return source?.typeOfUnit === UnitType.suffix || dest?.typeOfUnit === UnitType.suffix;
+	};
+
 	/* Warning Modal */
 	const handleWarningConfirm = () => {
 		//Close the warning modal
