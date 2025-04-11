@@ -389,7 +389,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 								type='select'
 								defaultValue={state.bidirectional.toString()}
 								onChange={e => handleBooleanChange(e)}
-								invalid={isMeterSource() && state.bidirectional === true}>
+								invalid={(isMeterSource() || isSuffixUsed()) && state.bidirectional === true}>
 								{Object.keys(TrueFalseType).map(key => {
 									return (<option value={key} key={key}>{translate(`TrueFalseType.${key}`)}</option>);
 								})}
@@ -397,6 +397,11 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 							{isMeterSource() && state.bidirectional === true && (
 								<FormFeedback className='d-block'>
 									<FormattedMessage id="conversion.bidirectional.disabled.meter"/>
+								</FormFeedback>
+							)}
+							{isSuffixUsed() && state.bidirectional === true && (
+								<FormFeedback className='d-block'>
+									<FormattedMessage id="conversion.bidirectional.disabled.suffix"/>
 								</FormFeedback>
 							)}
 						</FormGroup>
