@@ -127,7 +127,8 @@ export default function CreateConversionModalComponent() {
 			// Add the new conversion and update the store
 			// Omit the source options , do not need to send in request so remove here.
 			// If source is a meter, make bidirectional false
-			addConversionMutation({...omit(conversionState, 'sourceOptions'), bidirectional: isMeterSource() ? false : conversionState.bidirectional});
+			addConversionMutation({...omit(conversionState, 'sourceOptions'),
+				bidirectional: (isMeterSource() || isSuffixUsed()) ? false : conversionState.bidirectional});
 			resetState();
 		} else {
 			showErrorNotification(reason);
