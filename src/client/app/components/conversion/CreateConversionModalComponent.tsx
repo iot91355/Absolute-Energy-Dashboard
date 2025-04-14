@@ -85,6 +85,13 @@ export default function CreateConversionModalComponent() {
 		return source?.typeOfUnit === UnitType.meter;
 	};
 
+	// Determine whether the selected source or destination is a suffix unit
+	const isSuffixUsed = () => {
+		const source = defaultValues.sourceOptions.find(u => u.id === conversionState.sourceId);
+		const dest = defaultValues.sourceOptions.find(u => u.id === conversionState.destinationId);
+		return source?.typeOfUnit === UnitType.suffix || dest?.typeOfUnit === UnitType.suffix;
+	};
+
 	/* Warning Modal */
 	const handleWarningConfirm = () => {
 		//Close the warning modal
@@ -92,7 +99,8 @@ export default function CreateConversionModalComponent() {
 
 		//Proceed with the creation of the conversion
 		setShowModal(false);
-		addConversionMutation({...omit(conversionState, 'sourceOptions'), bidirectional: isMeterSource() ? false : conversionState.bidirectional});
+		addConversionMutation({...omit(conversionState, 'sourceOptions'),
+			bidirectional: (isMeterSource() || isSuffixUsed()) ? false : conversionState.bidirectional});
 		resetState();
 	};
 
@@ -119,7 +127,9 @@ export default function CreateConversionModalComponent() {
 			// Add the new conversion and update the store
 			// Omit the source options , do not need to send in request so remove here.
 			// If source is a meter, make bidirectional false
-			addConversionMutation({...omit(conversionState, 'sourceOptions'), bidirectional: isMeterSource() ? false : conversionState.bidirectional});
+			// If source or destination is a suffix unit, make bidirectional false
+			addConversionMutation({...omit(conversionState, 'sourceOptions'),
+				bidirectional: (isMeterSource() || isSuffixUsed()) ? false : conversionState.bidirectional});
 			resetState();
 		} else {
 			showErrorNotification(reason);
@@ -222,7 +232,7 @@ export default function CreateConversionModalComponent() {
 								type='select'
 								onChange={e => handleBooleanChange(e)}
 								value={String(conversionState.bidirectional)}
-								invalid={isMeterSource() && conversionState.bidirectional === true}>
+								invalid={(isMeterSource() || isSuffixUsed()) && conversionState.bidirectional === true}>
 								{Object.keys(TrueFalseType).map(key => {
 									return (<option value={key} key={key}>{translate(`TrueFalseType.${key}`)}</option>);
 								})}
@@ -230,6 +240,11 @@ export default function CreateConversionModalComponent() {
 							{isMeterSource() && conversionState.bidirectional === true && (
 								<FormFeedback className='d-block'>
 									<FormattedMessage id="conversion.bidirectional.disabled.meter"/>
+								</FormFeedback>
+							)}
+							{isSuffixUsed() && conversionState.bidirectional === true &&  (
+								<FormFeedback className='d=block'>
+									<FormattedMessage id="conversion.bidirectional.disabled.suffix"/>
 								</FormFeedback>
 							)}
 						</FormGroup>
