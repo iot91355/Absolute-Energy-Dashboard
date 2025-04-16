@@ -20,7 +20,6 @@ import Locales from '../types/locales';
 import { useTranslate } from '../redux/componentHooks';
 import SpinnerComponent from './SpinnerComponent';
 import { selectSliderRangeInterval } from '../redux/slices/graphSlice';
-
 import { fullSizeContainer } from '../styles/modalStyle';
 
 /**
@@ -95,8 +94,8 @@ export default function LineChartComponent() {
 					margin: { t: 0, b: 0, r: 3 }, // Eliminate top, bottom, and right margins
 					autosize: true, showlegend: true,
 					legend: { x: 0, y: 1.1, orientation: 'h' },
-					// 'fixedrange' on the yAxis means that dragging is only allowed on the xAxis which we utilize for selecting dateRanges
 					yaxis: { title: unitLabel, gridcolor: '#ddd', fixedrange: true },
+					// 'fixedrange' on the yAxis means that dragging is only allowed on the xAxis which we utilize for selecting dateRanges
 					xaxis: {
 						rangeslider: { visible: true },
 						range: [sliderRangeInterval.getStartTimestamp()?.toISOString()
