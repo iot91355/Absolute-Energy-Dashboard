@@ -69,6 +69,13 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 		return source?.typeOfUnit === UnitType.meter;
 	};
 
+	// Determine whether the selected source or destination is a suffix unit
+	const isSuffixUsed = () => {
+		const source = unitDataById[state.sourceId];
+		const dest = unitDataById[state.destinationId];
+		return source?.typeOfUnit === UnitType.suffix || dest?.typeOfUnit === UnitType.suffix;
+	};
+
 	/**
 	 * Calculates the number of conversions that use a given unit as a source or destination (not both).
 	 * @param unit The unit that is used for calculating the number of conversions.
@@ -260,7 +267,10 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 		// Only do work if there are changes
 		if (conversionHasChanges) {
 			// Save our changes
-			editConversion({ conversionData: { ...state, bidirectional: isMeterSource() ? false : state.bidirectional }, shouldRedoCik });
+			editConversion({
+				conversionData: {
+					...state,
+					bidirectional: (isMeterSource() || isSuffixUsed()) ? false : state.bidirectional }, shouldRedoCik });
 		}
 	};
 	const handleWarningCancel = () => {
@@ -291,7 +301,10 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 			// Only do work if there are changes
 			if (conversionHasChanges) {
 				// Save our changes
-				editConversion({ conversionData: state, shouldRedoCik });
+				editConversion({
+					conversionData: {
+						...state,
+						bidirectional: (isMeterSource() || isSuffixUsed()) ? false : state.bidirectional }, shouldRedoCik });
 			}
 		}
 	};
@@ -376,7 +389,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 								type='select'
 								defaultValue={state.bidirectional.toString()}
 								onChange={e => handleBooleanChange(e)}
-								invalid={isMeterSource() && state.bidirectional === true}>
+								invalid={(isMeterSource() || isSuffixUsed()) && state.bidirectional === true}>
 								{Object.keys(TrueFalseType).map(key => {
 									return (<option value={key} key={key}>{translate(`TrueFalseType.${key}`)}</option>);
 								})}
@@ -384,6 +397,11 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 							{isMeterSource() && state.bidirectional === true && (
 								<FormFeedback className='d-block'>
 									<FormattedMessage id="conversion.bidirectional.disabled.meter"/>
+								</FormFeedback>
+							)}
+							{isSuffixUsed() && state.bidirectional === true && (
+								<FormFeedback className='d-block'>
+									<FormattedMessage id="conversion.bidirectional.disabled.suffix"/>
 								</FormFeedback>
 							)}
 						</FormGroup>
