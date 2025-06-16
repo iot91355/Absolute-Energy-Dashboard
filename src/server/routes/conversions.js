@@ -6,8 +6,11 @@ const express = require('express');
 const { log } = require('../log');
 const { getConnection } = require('../db');
 const Conversion = require('../models/Conversion');
+const Meter = require('../models/Meter');
+const User = require('../models/User');
+const Unit = require('../models/Unit');
 const { success, failure } = require('./response');
-const { createConversionGraph, createConversionGraphFromArray } = require('../services/graph/createConversionGraph');
+const { getAllPaths, createConversionGraph, createConversionGraphFromArray } = require('../services/graph/createConversionGraph');
 const validate = require('jsonschema').validate;
 
 const router = express.Router();
@@ -187,6 +190,7 @@ router.post('/delete', async (req, res) => {
 	}
 });
 router.post('/simulate-delete', async (req, res) => {
+	const conn = getConnection();
 	// 1. Validate input like in /delete
 	// Only require a source and destination id
 	const validConversion = {
@@ -210,10 +214,9 @@ router.post('/simulate-delete', async (req, res) => {
 	}
 	// 2. Load all conversions, units, meters, groups
 	try {
-		const [allConversions, allMeters, allGroups, allUnits] = await Promise.all([
+		const [allConversions, allMeters, allUnits] = await Promise.all([
 			Conversion.getAll(conn),
 			Meter.getAll(conn),
-			Group.getAll(conn),
 			Unit.getAll(conn)
 		]);
 	// 3. Remove the conversions we are simulating deleting
