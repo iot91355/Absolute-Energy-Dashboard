@@ -110,7 +110,6 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 		let msg = '';
 		let cancel = false;
 
-
 		// Meter source orphan check
 		if (source.typeOfUnit === UnitType.meter) {
 			const srcCount = getConversionCount(source, conversionDetails);
@@ -141,8 +140,6 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 			//		if (srcCount === 1) {
 			//			msg += `${translate('conversion.delete.suffix.disable')} "${source.name}".\n`;
 			//  }
-
-
 		}
 
 		// Unit-to-unit orphan check ---
@@ -162,7 +159,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 			}
 		}
 
-		// Only run simulation if orphan check passed and it's unit-to-unit
+		// Only run simulation if the previous orphan check passed and it's unit-to-unit
 		if (
 			source.typeOfUnit === UnitType.unit &&
 			dest.typeOfUnit === UnitType.unit &&
