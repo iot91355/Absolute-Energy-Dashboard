@@ -9,6 +9,7 @@ import { Button, Col, Container, FormGroup, FormFeedback, Input, Label, Modal, M
 import TooltipHelpComponent from '../TooltipHelpComponent';
 import { conversionsApi, selectConversionsDetails } from '../../redux/api/conversionsApi';
 import { selectMeterDataById } from '../../redux/api/metersApi';
+import { selectGroupDataById } from '../../redux/api/groupsApi';
 import { selectUnitDataById } from '../../redux/api/unitsApi';
 import { useAppSelector } from '../../redux/reduxHooks';
 import '../../styles/modal.css';
@@ -42,6 +43,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 	const [simulateDeleteConversion] = conversionsApi.useSimulateDeleteConversionMutation();
 	const unitDataById = useAppSelector(selectUnitDataById);
 	const meterDataById = useAppSelector(selectMeterDataById);
+	const groupDataById = useAppSelector(selectGroupDataById);
 	const conversionDetails = useAppSelector(selectConversionsDetails);
 
 	// Set existing conversion values
@@ -279,6 +281,35 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 							</div>
 						);
 					});
+
+					// After you get result from simulateDeleteConversion check default graphic units
+					result.affectedMeters.forEach(meter => {
+						const meterData = meterDataById[meter.meterId];
+						const lostDefault = meter.lostUnits.includes(meterData.defaultGraphicUnit);
+						if (lostDefault) {
+							msgElements.push(
+								<div key={`meter-default-${meter.meterId}`}>
+									<span className="bold">{translate('conversion.delete.meter.default.lost')}</span>
+									"{meterData.name}"
+									({translate('conversion.default.graphic.unit')}: "{unitDataById[meterData.defaultGraphicUnit].name}")
+								</div>
+							);
+						}
+					});
+
+					result.affectedGroups?.forEach(group => {
+						const groupData = groupDataById[group.groupId];
+						const lostDefault = group.lostUnits.includes(groupData.defaultGraphicUnit);
+						if (lostDefault) {
+							msgElements.push(
+								<div key={`group-default-${group.groupId}`}>
+									<span className="bold">{translate('conversion.delete.group.default.lost')}</span>
+									"{groupData.name}"
+									({translate('conversion.default.graphic.unit')}:"{unitDataById[groupData.defaultGraphicUnit].name}")
+								</div>
+							);
+						}
+					});
 				}
 			} catch (e) {
 				msgElements.push(
@@ -315,7 +346,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 	const [showDeleteConfirmationModal, setShowDeleteConfirmationModal] = useState(false);
 	const [showCancelModal, setShowCancelModal] = useState(false);
 	const [deleteConfirmationMessage, setDeleteConfirmationMessage] = useState<React.ReactNode>(
-		translate('conversion.delete.conversion') + ' [' + props.conversionIdentifier + '] ?');
+		<div>{translate('conversion.delete.conversion')} [{props.conversionIdentifier}] ?</div>);
 	const deleteConfirmText = translate('conversion.delete.conversion');
 	const deleteRejectText = translate('cancel');
 	// The first two handle functions below are required because only one Modal can be open at a time (properly)
