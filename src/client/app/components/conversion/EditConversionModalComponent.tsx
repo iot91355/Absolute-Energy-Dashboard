@@ -8,8 +8,8 @@ import { FormattedMessage } from 'react-intl';
 import { Button, Col, Container, FormGroup, FormFeedback, Input, Label, Modal, ModalBody, ModalFooter, ModalHeader, Row } from 'reactstrap';
 import TooltipHelpComponent from '../TooltipHelpComponent';
 import { conversionsApi, selectConversionsDetails } from '../../redux/api/conversionsApi';
-import { selectMeterDataById } from '../../redux/api/metersApi';
-import { selectGroupDataById } from '../../redux/api/groupsApi';
+import { metersApi, selectMeterDataById } from '../../redux/api/metersApi';
+import { groupsApi, selectGroupDataById } from '../../redux/api/groupsApi';
 import { selectUnitDataById } from '../../redux/api/unitsApi';
 import { useAppSelector } from '../../redux/reduxHooks';
 import '../../styles/modal.css';
@@ -41,6 +41,8 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 	const [editConversion] = conversionsApi.useEditConversionMutation();
 	const [deleteConversion] = conversionsApi.useDeleteConversionMutation();
 	const [simulateDeleteConversion] = conversionsApi.useSimulateDeleteConversionMutation();
+	const [editMeter] = metersApi.useEditMeterMutation();
+	const [editGroup] = groupsApi.useEditGroupMutation();
 	const unitDataById = useAppSelector(selectUnitDataById);
 	const meterDataById = useAppSelector(selectMeterDataById);
 	const groupDataById = useAppSelector(selectGroupDataById);
@@ -52,6 +54,8 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 	/* State */
 	// Handlers for each type of input change
 	const [state, setState] = useState(values);
+	const [metersWithLostDefault, setMetersWithLostDefault] = useState<number[]>([]);
+	const [groupsWithLostDefault, setGroupsWithLostDefault] = useState<number[]>([]);
 
 	const handleStringChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setState({ ...state, [e.target.name]: e.target.value });
@@ -283,10 +287,14 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 					});
 
 					// After you get result from simulateDeleteConversion check default graphic units
+					const metersLostDefault: number[] = [];
+					const groupsLostDefault: number[] = [];
+
 					result.affectedMeters.forEach(meter => {
 						const meterData = meterDataById[meter.meterId];
 						const lostDefault = meter.lostUnits.includes(meterData.defaultGraphicUnit);
 						if (lostDefault) {
+							metersLostDefault.push(meter.meterId);
 							msgElements.push(
 								<div key={`meter-default-${meter.meterId}`}>
 									<span className="bold">{translate('conversion.delete.meter.default.lost')}</span>
@@ -301,6 +309,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 						const groupData = groupDataById[group.groupId];
 						const lostDefault = group.lostUnits.includes(groupData.defaultGraphicUnit);
 						if (lostDefault) {
+							groupsLostDefault.push(group.groupId);
 							msgElements.push(
 								<div key={`group-default-${group.groupId}`}>
 									<span className="bold">{translate('conversion.delete.group.default.lost')}</span>
@@ -310,6 +319,8 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 							);
 						}
 					});
+					setMetersWithLostDefault(metersLostDefault);
+					setGroupsWithLostDefault(groupsLostDefault);
 				}
 			} catch (e) {
 				msgElements.push(
@@ -362,12 +373,40 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 		// Show the warning modal
 		setShowDeleteConfirmationModal(true);
 	};
-	const handleDeleteConversion = () => {
+	const handleDeleteConversion = async () => {
 		// Closes the warning modal
 		// Do not call the handler function because we do not want to open the parent modal
 		setShowDeleteConfirmationModal(false);
 
-		// Delete the conversion using the state object, it should only require the source and destination ids set
+		// Update meters
+		for (const meterId of metersWithLostDefault) {
+			const meterData = meterDataById[meterId];
+			await editMeter({ meterData: { ...meterData, defaultGraphicUnit: -99 }, shouldRefreshViews: false });
+		}
+
+		// Update groups
+		for (const groupId of groupsWithLostDefault) {
+			const groupData = groupDataById[groupId];
+			// The GroupsAPI expect only 10 properties, and does not expect deepMeters, so this is my way of removing it
+			const {
+				id, name, displayable, gps, note, area,
+				childGroups, childMeters, areaUnit
+			} = groupData;
+			await editGroup({
+				id,
+				name,
+				displayable,
+				gps,
+				note,
+				area,
+				childGroups,
+				childMeters,
+				defaultGraphicUnit: -99,
+				areaUnit
+			});
+		}
+
+		// Delete the conversion
 		deleteConversion({ sourceId: state.sourceId, destinationId: state.destinationId });
 	};
 
