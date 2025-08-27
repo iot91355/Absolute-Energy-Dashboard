@@ -43,7 +43,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 	const translate = useTranslate();
 	const [editConversion] = conversionsApi.useEditConversionMutation();
 	const [deleteConversion] = conversionsApi.useDeleteConversionMutation();
-	const [simulateDeleteConversion] = conversionsApi.useSimulateDeleteConversionMutation();
+	const [triggerSimulate] = conversionsApi.useLazySimulateDeleteConversionQuery();
 	const [editMeter] = metersApi.useEditMeterMutation();
 	const [editGroup] = groupsApi.useEditGroupMutation();
 	const unitDataById = useAppSelector(selectUnitDataById);
@@ -82,7 +82,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 	};
 
 	const handleBooleanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		setState({...state, [e.target.name]: JSON.parse(e.target.value) });
+		setState({ ...state, [e.target.name]: JSON.parse(e.target.value) });
 	};
 
 	const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -133,7 +133,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 	const checkState = async () => {
 		const source = unitDataById[state.sourceId];
 		const dest = unitDataById[state.destinationId];
-		const msgElements:React.ReactNode[] = [];
+		const msgElements: React.ReactNode[] = [];
 		let cancel = false;
 
 		// Meter source orphan check
@@ -229,7 +229,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 		// Only run simulation if the previous orphan check passed and it's unit-to-unit
 		if (source.typeOfUnit !== UnitType.suffix && dest.typeOfUnit === UnitType.unit && !cancel) {
 			try {
-				const result = await simulateDeleteConversion({
+				const result = await triggerSimulate({
 					sourceId: state.sourceId,
 					destinationId: state.destinationId
 				}).unwrap();
@@ -282,7 +282,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 					const nonOrphanedGroups = result.affectedGroups?.filter(group => !group.orphaned);
 					nonOrphanedGroups.forEach(group => {
 						const key = JSON.stringify([...group.lostUnits].sort());
-						if (!groupLossMap.has(key)){
+						if (!groupLossMap.has(key)) {
 							groupLossMap.set(key, []);
 						}
 						groupLossMap.get(key)!.push(group.groupName);
@@ -479,7 +479,9 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 			editConversion({
 				conversionData: {
 					...state,
-					bidirectional: (isMeterSource() || isSuffixUsed()) ? false : state.bidirectional }, shouldRedoCik });
+					bidirectional: (isMeterSource() || isSuffixUsed()) ? false : state.bidirectional
+				}, shouldRedoCik
+			});
 		}
 	};
 	const handleWarningCancel = () => {
@@ -513,7 +515,9 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 				editConversion({
 					conversionData: {
 						...state,
-						bidirectional: (isMeterSource() || isSuffixUsed()) ? false : state.bidirectional }, shouldRedoCik });
+						bidirectional: (isMeterSource() || isSuffixUsed()) ? false : state.bidirectional
+					}, shouldRedoCik
+				});
 			}
 		}
 	};
@@ -636,7 +640,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 								name='bidirectional'
 								type='select'
 								defaultValue={state.bidirectional.toString()}
-								onChange={e => {handleBooleanChange(e);}}
+								onChange={e => { handleBooleanChange(e); }}
 								invalid={(isMeterSource() || isSuffixUsed()) && state.bidirectional === true}>
 								{Object.keys(TrueFalseType).map(key => {
 									return (<option value={key} key={key}>{translate(`TrueFalseType.${key}`)}</option>);
@@ -644,12 +648,12 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 							</Input>
 							{isMeterSource() && state.bidirectional === true && (
 								<FormFeedback className='d-block'>
-									<FormattedMessage id="conversion.bidirectional.disabled.meter"/>
+									<FormattedMessage id="conversion.bidirectional.disabled.meter" />
 								</FormFeedback>
 							)}
 							{isSuffixUsed() && state.bidirectional === true && (
 								<FormFeedback className='d-block'>
-									<FormattedMessage id="conversion.bidirectional.disabled.suffix"/>
+									<FormattedMessage id="conversion.bidirectional.disabled.suffix" />
 								</FormFeedback>
 							)}
 						</FormGroup>
@@ -663,7 +667,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 										name='slope'
 										type='number'
 										value={state.slope}
-										onChange={e => {handleNumberChange(e);}}
+										onChange={e => { handleNumberChange(e); }}
 									/>
 								</FormGroup>
 							</Col>
@@ -676,7 +680,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 										name='intercept'
 										type='number'
 										value={state.intercept}
-										onChange={e => {handleNumberChange(e);}}
+										onChange={e => { handleNumberChange(e); }}
 									/>
 								</FormGroup>
 							</Col>
@@ -690,7 +694,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 								type='textarea'
 								defaultValue={state.note}
 								placeholder='Note'
-								onChange={e => {handleStringChange(e);}}
+								onChange={e => { handleStringChange(e); }}
 							/>
 						</FormGroup>
 					</Container>
