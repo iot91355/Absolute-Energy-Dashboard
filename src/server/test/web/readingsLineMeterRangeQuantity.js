@@ -92,7 +92,7 @@ mocha.describe('readings API', () => {
 
 					// Add LR6 here
 
-					mocha.it.only(
+					mocha.it(
 						'LR7: range with partial days/hours for daily gives only full days',
 						async () => {
 							// Prepare test data using existing utility
