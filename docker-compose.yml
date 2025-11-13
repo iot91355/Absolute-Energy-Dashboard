@@ -22,7 +22,7 @@ services:
             timeout: 10s
             retries: 3
         ports:
-           - "5432:5432"
+        # - "5432:5432"
         # Uncomment the above lines to enable access to the PostgreSQL server
         # from the host machine.
         # Web service runs Node
@@ -66,8 +66,7 @@ services:
             - ./:/usr/src/app
         # Map the default port.
         ports:
-            - "3000:3000"
-            # - "3000:3000" # Should be commented out if you uncomment 80:3000 below.
+            - "3000:3000" # Should be commented out if you uncomment 80:3000 below.
             # - "9229:9229" # Debug port, should be commented out for production
             # For production you might want something like:
             # - "80:3000"
