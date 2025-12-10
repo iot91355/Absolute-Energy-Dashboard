@@ -100,8 +100,8 @@ router.post('/edit', adminAuthMiddleware('edit units'), async (req, res) => {
 				// Suffix changes so some conversions and units need to be removed.
 				await removeAdditionalConversionsAndUnits(unit, conn);
 			}
-			for (const key of Object.keys(unit)){
-				if (Object.prototype.hasOwnProperty.call(req.body, key) && !['id'].includes(key)){
+			for (const key of Object.keys(unit)) {
+				if (Object.hasOwn(req.body, key)) {
 					unit[key] = req.body[key]
 				}
 			}

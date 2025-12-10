@@ -22,7 +22,7 @@ mocha.describe('Units Route', () => {
 			const unit = new Unit(undefined, 'Unit', 'Unit Id', Unit.unitRepresentType.QUANTITY,
 				1000, Unit.unitType.UNIT, 'Suffix', Unit.displayableType.ALL, true, 'Note');
 			await unit.insert(conn);
-			const beforeSuffix = unit.suffix;
+			const beforeNote = unit.note;
 			const res = await chai.request(app).post('/api/units/edit').set('token', token).send({
 				id: unit.id,
 				name: 'New name',
@@ -31,9 +31,9 @@ mocha.describe('Units Route', () => {
 			expect(res).to.have.status(200);
 			const updatedUnit = await Unit.getById(unit.id, conn);
 			expect(updatedUnit.name).to.equal('New name');
-			expect(updatedUnit.suffix).to.equal(beforeSuffix);
+			expect(updatedUnit.note).to.equal(beforeNote);
 		});
-	
+
 	});
 
 });
