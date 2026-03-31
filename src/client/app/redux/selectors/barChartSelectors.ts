@@ -5,83 +5,174 @@
 import { createSelector } from '@reduxjs/toolkit';
 import * as moment from 'moment';
 import { BarReadings } from 'types/readings';
-import { selectWidthDays } from '../../redux/slices/graphSlice';
+import { selectWidthDays, selectBarStacking } from '../../redux/slices/graphSlice';
 import { DataType } from '../../types/Datasources';
 import { MeterOrGroup } from '../../types/redux/graph';
 import getGraphColor from '../../utils/getGraphColor';
 import { createAppSelector } from './selectors';
-import { selectAreaScalingFromEntity, selectNameFromEntity } from './entitySelectors';
-import { selectPlotlyMeterDeps, selectPlotlyGroupDeps } from './plotlyDataSelectors';
+import {
+	selectNameFromEntity,
+	selectScalingFromEntity
+} from './entitySelectors';
+import {
+	selectPlotlyMeterDeps,
+	selectPlotlyGroupDeps
+} from './plotlyDataSelectors';
 import { selectSelectedLanguage } from '../../redux/slices/appStateSlice';
 
-type PlotlyBarDeps = ReturnType<typeof selectPlotlyMeterDeps> & { barDuration: moment.Duration }
+type PlotlyBarDeps =
+	ReturnType<typeof selectPlotlyMeterDeps> & {
+		barDuration: moment.Duration;
+		barStacking: boolean;
+	};
+
 export const selectPlotlyBarDeps = createAppSelector(
 	[
 		selectPlotlyMeterDeps,
 		selectPlotlyGroupDeps,
 		selectWidthDays,
-		selectSelectedLanguage
+		selectSelectedLanguage,
+		selectBarStacking
 	],
-	(meterDeps, groupDeps, barDuration) => {
-		const barMeterDeps = { ...meterDeps, barDuration };
-		const barGroupDeps = { ...groupDeps, barDuration };
+	(meterDeps, groupDeps, barDuration, locale, barStacking) => {
+		const barMeterDeps = {
+			...meterDeps,
+			barDuration,
+			barStacking,
+			needsRateScaling: false,
+			rateScaling: 1
+		};
+		const barGroupDeps = {
+			...groupDeps,
+			barDuration,
+			barStacking,
+			needsRateScaling: false,
+			rateScaling: 1
+		};
 		return { barMeterDeps, barGroupDeps };
 	}
 );
 
 // Selector that derives meter data for the bar graphic
-export const selectPlotlyBarDataFromResult = createSelector.withTypes<BarReadings>()(
-	[
-		// Query data
-		// Data derivation dependencies. Use ReturnType inference to get type from dependency selector.
-		data => data,
-		(_data, dependencies: PlotlyBarDeps) => dependencies
-	],
-	(data, { areaNormalization, compatibleEntities, meterDataById, groupDataById, meterOrGroup, barDuration, barUnitLabel, areaUnit }) => {
-		const plotlyData: Partial<Plotly.PlotData>[] = Object.entries(data)
-			// filter entries for requested groups
-			.filter(([id]) => compatibleEntities.includes((Number(id))))
-			.map(([id, readings]) => {
-				const entityId = Number(id);
-				const entity = meterOrGroup === MeterOrGroup.meters ? meterDataById[entityId] : groupDataById[entityId];
-				const entityArea = selectAreaScalingFromEntity(entity, areaUnit, areaNormalization);
-				const label = selectNameFromEntity(entity) + (meterOrGroup === MeterOrGroup.meters ? 'ᴹ' : meterOrGroup === MeterOrGroup.groups ? 'ᴳ' : '');
-				const colorID = entity.id;
+export const selectPlotlyBarDataFromResult =
+	createSelector.withTypes<BarReadings>()(
+		[
+			data => data,
+			(_data, dependencies: PlotlyBarDeps) => dependencies
+		],
+		(
+			data,
+			{
+				areaNormalization,
+				compatibleEntities,
+				meterDataById,
+				groupDataById,
+				meterOrGroup,
+				barDuration,
+				barUnitLabel,
+				areaUnit,
+				barStacking
+			}
+		) => {
+			const validEntries = Object.entries(data)
+				.filter(([id]) => compatibleEntities.includes(Number(id)));
 
-				// Create two arrays for the x and y values. Fill the array with the data.
-				const xData: string[] = [];
-				const yData: number[] = [];
-				const hoverText: string[] = [];
-				readings.forEach(barReading => {
-					const st = moment.utc(barReading.startTimestamp);
-					// Time reading is in the middle of the start and end timestamp (may change this depending on how it looks on the bar graph)\
-					const timeReading = st.add(moment.utc(barReading.endTimestamp).diff(st) / 2);
-					xData.push(timeReading.utc().format('YYYY-MM-DD HH:mm:ss'));
-					let readingValue = barReading.reading;
-					if (areaNormalization) {
-						readingValue /= entityArea;
+			const plotlyData: Partial<Plotly.PlotData>[] = validEntries
+				.map(([id, readings], index) => {
+					const entityId = Number(id);
+					const entity =
+						meterOrGroup === MeterOrGroup.meters
+							? meterDataById[entityId]
+							: groupDataById[entityId];
+
+					const scaling = selectScalingFromEntity(
+						entity,
+						areaUnit,
+						areaNormalization,
+						1
+					);
+
+					const label =
+						selectNameFromEntity(entity) +
+						(meterOrGroup === MeterOrGroup.meters
+							? 'ᴹ'
+							: meterOrGroup === MeterOrGroup.groups
+								? 'ᴳ'
+								: '');
+
+					const colorID = entity.id;
+
+					const xData: string[] = [];
+					const yData: number[] = [];
+					const hoverText: string[] = [];
+
+					const allReadings = validEntries.flatMap(([_id, r]) => r);
+					let minDurationMs = barDuration.asMilliseconds();
+
+					if (allReadings.length > 0) {
+						// Calculate minimum duration from actual data points
+						const durations = allReadings.map(r =>
+							moment(r.endTimestamp).valueOf() - moment(r.startTimestamp).valueOf()
+						);
+						const minReadingDuration = Math.min(...durations);
+						if (minReadingDuration > 0 && minReadingDuration < minDurationMs) {
+							minDurationMs = minReadingDuration;
+						}
 					}
-					yData.push(readingValue);
-					// only display a range of dates for the hover text if there is more than one day in the range
-					let timeRange: string = `${moment.utc(barReading.startTimestamp).format('ll')}`;
-					if (barDuration.asDays() != 1) {
-						// subtracting one extra day caused by day ending at midnight of the next day.
-						// Going from DB unit timestamp that is UTC so force UTC with moment, as usual.
-						timeRange += ` - ${moment.utc(barReading.endTimestamp).subtract(1, 'days').format('ll')}`;
-					}
-					hoverText.push(`<b> ${timeRange} </b> <br> ${label}: ${readingValue.toPrecision(6)} ${barUnitLabel}`);
+
+					// Let Plotly calculate trace width natively using bargap and bargroupgap
+
+					readings.forEach(barReading => {
+						const start = moment.utc(barReading.startTimestamp);
+
+						// Center the data point perfectly inside the duration bucket so that 
+						// grouped bars do not straddle past the starting boundaries.
+						const center = moment.utc(barReading.startTimestamp + minDurationMs / 2);
+						xData.push(center.format('YYYY-MM-DD HH:mm:ss'));
+
+						const readingValue =
+							barReading.reading * scaling;
+						yData.push(readingValue);
+
+						const readingDuration = moment(barReading.endTimestamp).diff(start);
+						let timeRange: string;
+
+						if (readingDuration < 86400000) {
+							const end = moment.utc(barReading.endTimestamp);
+							timeRange = `${start.format('ll LT')} - ${end.format('LT')}`;
+						} else {
+							timeRange = start.format('ll');
+							if (moment.duration(readingDuration).asDays() > 1.1) {
+								timeRange += ` - ${moment
+									.utc(barReading.endTimestamp)
+									.subtract(1, 'days')
+									.format('ll')}`;
+							}
+						}
+
+						const formatted = Number(readingValue).toLocaleString(
+							undefined,
+							{ maximumFractionDigits: 6 }
+						);
+
+						hoverText.push(
+							`<b>${timeRange}</b><br>${label}: ${formatted} ${barUnitLabel}`
+						);
+					});
+
+					return {
+						name: label,
+						x: xData,
+						y: yData,
+						text: hoverText,
+						hoverinfo: 'text',
+						type: 'bar',
+						marker: {
+							color: getGraphColor(colorID, DataType.Meter)
+						}
+					};
 				});
-				// This variable contains all the elements (x and y values, bar type, etc.) assigned to the data parameter of the Plotly object
-				return {
-					name: label,
-					x: xData,
-					y: yData,
-					text: hoverText,
-					hoverinfo: 'text',
-					type: 'bar',
-					marker: { color: getGraphColor(colorID, DataType.Meter) }
-				};
-			});
-		return plotlyData;
-	}
-);
+
+			return plotlyData;
+		}
+	);

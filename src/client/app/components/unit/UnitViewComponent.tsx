@@ -51,8 +51,11 @@ export default function UnitViewComponent(props: UnitViewComponentProps) {
 			<div className="item-container">
 				<b><FormattedMessage id="unit.represent" /></b> {props.unit.unitRepresent}
 			</div>
-			<div className={props.unit.displayable.toString()}>
-				<b><FormattedMessage id="displayable" /></b> {props.unit.displayable}
+			<div className="item-container">
+				<b><FormattedMessage id="displayable" /></b>
+				<span className={`status-badge ${props.unit.displayable.toString()}`}>
+					{props.unit.displayable}
+				</span>
 			</div>
 			<div className="item-container">
 				<b><FormattedMessage id="unit.preferred.display" /></b> {translate(`TrueFalseType.${props.unit.preferredDisplay.toString()}` as LocaleDataKey)}

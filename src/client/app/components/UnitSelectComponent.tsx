@@ -2,7 +2,7 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import * as React from 'react';
+
 import Select from 'react-select';
 import { useAppDispatch, useAppSelector } from '../redux/reduxHooks';
 import { selectUnitSelectData } from '../redux/selectors/uiSelectors';
@@ -14,7 +14,6 @@ import { graphSlice, selectSelectedUnit } from '../redux/slices/graphSlice';
 import { useTranslate } from '../redux/componentHooks';
 import TooltipMarkerComponent from './TooltipMarkerComponent';
 import { selectUnitDataById, unitsApi } from '../redux/api/unitsApi';
-import { labelStyle } from '../styles/modalStyle';
 
 /**
  * @returns A React-Select component for UI Options Panel
@@ -27,9 +26,9 @@ export default function UnitSelectComponent() {
 	const unitsByID = useAppSelector(selectUnitDataById);
 
 	const { isFetching: unitsIsFetching } = unitsApi.endpoints.getUnitsDetails.useQueryState();
-	
+
 	// Build the selected option based on current Redux state
-	const selectedUnitOption: SelectOption | null = (selectedUnitID !== -99 && unitsByID[selectedUnitID]) 
+	const selectedUnitOption: SelectOption | null = (selectedUnitID !== -99 && unitsByID[selectedUnitID])
 		? {
 			label: unitsByID[selectedUnitID].identifier,
 			value: selectedUnitID,
@@ -47,38 +46,39 @@ export default function UnitSelectComponent() {
 		}
 	};
 
-	console.log('UnitSelectComponent render - options count:', Object.keys(unitSelectOptions || {}).length, 'selectedUnitID:', selectedUnitID, 'selectedOption:', selectedUnitOption);
-
+	// eslint-disable-next-line max-len
 	return (
-		<div style={divBottomPadding}>
-			<p style={labelStyle}>
+		<div className="control-group">
+			<div className="control-label">
 				{translate('units')}
 				<TooltipMarkerComponent page='home' helpTextId='help.home.select.units' />
-			</p>
-			<Select<SelectOption, false, GroupedOption>
-				inputId="unit-select"
-				value={selectedUnitOption}
-				options={unitSelectOptions}
-				placeholder={translate('select.unit')}
-				onChange={onChange}
-				formatGroupLabel={formatGroupLabel}
-				isClearable
-				isLoading={unitsIsFetching}
-				menuPlacement="auto"
-			/>
+			</div>
+			<div style={{ width: '150px' }}>
+				<Select<SelectOption, false, GroupedOption>
+					inputId="unit-select"
+					value={selectedUnitOption}
+					options={unitSelectOptions}
+					placeholder={translate('select.unit')}
+					onChange={onChange}
+					formatGroupLabel={formatGroupLabel}
+					isClearable
+					isLoading={unitsIsFetching}
+					menuPlacement="auto"
+					classNamePrefix="react-select"
+					menuPortalTarget={document.body}
+					menuPosition="fixed"
+					styles={{
+						menuPortal: (base) => ({ ...base, zIndex: 9999 })
+					}}
+				/>
+			</div>
 		</div>
 	);
 }
 
-const groupStyles: React.CSSProperties = {
-	display: 'flex',
-	alignItems: 'center',
-	justifyContent: 'space-between'
-};
-
 const formatGroupLabel = (data: GroupedOption) => {
 	return (
-		< div style={groupStyles} >
+		< div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} >
 			<span>{data.label}</span>
 			<Badge pill color="primary">{data.options.length}</Badge>
 		</div >
@@ -86,7 +86,4 @@ const formatGroupLabel = (data: GroupedOption) => {
 	);
 };
 
-const divBottomPadding: React.CSSProperties = {
-	paddingBottom: '15px'
-};
 

@@ -83,12 +83,13 @@ export const exportGraphReadingsThunk = createAppThunk(
 			const groupReadings = readingsApi.endpoints.bar.select(barChartQueryArgs.groupArgs)(state);
 
 			const barDeps = selectPlotlyBarDeps(state);
-			const { areaUnit, areaNormalization, lineGraphRate } = barDeps.barMeterDeps;
+			// Do not apply line rate scaling for bar exports — bars represent quantities
+			const { areaUnit, areaNormalization } = barDeps.barMeterDeps;
 			barReadings.data && Object.entries(barReadings.data)
 				.filter(([id]) => barDeps.barMeterDeps.compatibleEntities.includes(Number(id)))
 				.forEach(([id, readings]) => {
 					const entity = selectMeterById(state, Number(id));
-					const scaling = selectScalingFromEntity(entity, areaUnit, areaNormalization, lineGraphRate.rate);
+					const scaling = selectScalingFromEntity(entity, areaUnit, areaNormalization, 1);
 					const sortedReadings = sortBy(Object.values(readings), item => item.startTimestamp, 'asc');
 					const entityName = selectNameFromEntity(entity);
 					const unitIdentifier = selectNameFromEntity(selectUnitById(state, selectSelectedUnit(state)));
@@ -100,7 +101,7 @@ export const exportGraphReadingsThunk = createAppThunk(
 				.filter(([id]) => barDeps.barGroupDeps.compatibleEntities.includes(Number(id)))
 				.forEach(([id, readings]) => {
 					const entity = selectGroupById(state, Number(id));
-					const scaling = selectScalingFromEntity(entity, areaUnit, areaNormalization, lineGraphRate.rate);
+					const scaling = selectScalingFromEntity(entity, areaUnit, areaNormalization, 1);
 					const sortedReadings = sortBy(Object.values(readings), item => item.startTimestamp, 'asc');
 					const entityName = selectNameFromEntity(entity);
 					const unitIdentifier = selectNameFromEntity(selectUnitById(state, selectSelectedUnit(state)));

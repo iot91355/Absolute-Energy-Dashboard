@@ -18,12 +18,12 @@ services:
         volumes:
             - ./postgres-data:/var/lib/postgresql/data/pgdata
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U postgres"]
+            test: [ "CMD-SHELL", "pg_isready -U postgres" ]
             interval: 10s
             timeout: 10s
             retries: 3
         ports:
-            - "5433:5432"
+            - "5533:5432"
         # Uncomment the above lines to enable access to the PostgreSQL server
         # from the host machine.
         # Web service runs Node
@@ -37,7 +37,7 @@ services:
             - OED_DB_TEST_DATABASE=oed_testing
             - OED_DB_PASSWORD=opened
             - OED_DB_HOST=database # Docker will set this hostname
-            - OED_DB_PORT=5432  
+            - OED_DB_PORT=5432
             - OED_TOKEN_SECRET=?
             - OED_LOG_FILE=log.txt
             - OED_MAIL_METHOD=none # Method of sending mail. Supports "secure-smtp", "none". Case insensitive.
@@ -61,6 +61,9 @@ services:
         # Link to the database so the app can persist data
         links:
             - database
+
+        restart: on-failure
+
         # Load the source code into the container.
         # Using a volume allows autorebuild to work.
         volumes:
@@ -68,7 +71,7 @@ services:
         # Map the default port.
         ports:
             - "3000:3000" # Should be commented out if you uncomment 80:3000 below.
-            - "9229:9229" # Debug port, should be commented out for production
+            - "9350:9229" # Debug port, should be commented out for production
             # For production you might want something like:
             # - "80:3000"
             # and comment out the debug port and 3000:3000 line above
@@ -76,40 +79,33 @@ services:
         depends_on:
             # - database
             database:
-              # We need the database and it has to be ready for work (see healthcheck above).
-              condition: service_healthy
+                # We need the database and it has to be ready for work (see healthcheck above).
+                condition: service_healthy
         healthcheck:
-            test: ["CMD", "curl", "-f", "http://localhost:3000"]
+            test: [ "CMD", "curl", "-f", "http://localhost:3000" ]
             interval: 10s
             timeout: 5s
             retries: 5
         # Lets docker compose up work right
         # If environment variable install_args is not set then it becomes blank without warning user.
-        command:
-            [
-                "bash",
-                "./src/scripts/installOED.sh",
-                "${install_args:-}"
-            ]
+        command: >
+            bash -c "sleep 8 && ./src/scripts/installOED.sh ${install_args:-}"
         # Use this if you are using a docker-compose that is earlier than version 2 and comment out the one above.
         # command: ["bash", "./src/scripts/installOED.sh"]
 
-    # Cypress testing service
+        # Cypress testing service
     cypress:
-      image: cypress/included
-      profiles:
-        - ui-testing
-      environment:
-        - CYPRESS_BASE_URL=http://web:3000
-        - DISPLAY=:99
-      working_dir: /usr/src/app
-      depends_on:
-        web:
-          condition: service_healthy
-      volumes:
-        - ./:/usr/src/app
-      entrypoint: >
-        /bin/sh -c "
-        rm -f /tmp/.X99-lock &&
-        Xvfb :99 -screen 0 1024x768x16"
-        
+        image: cypress/included
+        profiles:
+            - ui-testing
+        environment:
+            - CYPRESS_BASE_URL=http://web:3000
+            - DISPLAY=:99
+        working_dir: /usr/src/app
+        depends_on:
+            web:
+                condition: service_healthy
+        volumes:
+            - ./:/usr/src/app
+        entrypoint: >
+            /bin/sh -c " rm -f /tmp/.X99-lock && Xvfb :99 -screen 0 1024x768x16"

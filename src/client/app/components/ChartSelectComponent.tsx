@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import { values } from 'lodash';
-import * as React from 'react';
+
 import { useState } from 'react';
 import { FormattedMessage } from 'react-intl';
 import { useSelector } from 'react-redux';
@@ -16,7 +16,6 @@ import { State } from '../types/redux/state';
 import { useTranslate } from '../redux/componentHooks';
 import TooltipMarkerComponent from './TooltipMarkerComponent';
 import { selectSelectedLanguage } from '../redux/slices/appStateSlice';
-import { labelStyle } from '../styles/modalStyle';
 
 /**
  *  A component that allows users to select which chart should be displayed.
@@ -38,20 +37,21 @@ export default function ChartSelectComponent() {
 
 	return (
 		<>
-			<p style={labelStyle}>
+			<div className='control-label'>
 				<FormattedMessage id='graph.type' />:
 				<TooltipMarkerComponent page='home' helpTextId='help.home.chart.select' />
-			</p>
+			</div>
 			<Dropdown isOpen={expand} toggle={() => setExpand(!expand)}>
-				<DropdownToggle outline caret>
+				<DropdownToggle className='custom-dropdown-toggle' caret>
 					<FormattedMessage id={currentChartToRender} />
 				</DropdownToggle>
-				<DropdownMenu>
+				<DropdownMenu container="body" style={{ zIndex: 9999 }}>
 					{
 						// Make items for dropdown from enum
 						Object.values(ChartTypes)
-							// filter out current chart
-							.filter(chartType => chartType !== currentChartToRender)
+							// filter out current chart, hide 3D option, and disable compare charts
+							.filter(chartType => chartType !== currentChartToRender && chartType !== ChartTypes.threeD
+								&& chartType !== ChartTypes.compare && chartType !== ChartTypes.compareLine)
 							.sort()
 							// map to components
 							.map(chartType =>

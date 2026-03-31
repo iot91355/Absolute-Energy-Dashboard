@@ -61,8 +61,11 @@ export default function GroupViewComponent(props: GroupViewComponentProps) {
 				{props.group.defaultGraphicUnit === -99 ? ' ' + noUnitTranslated().identifier : ' ' + unitDataById[props.group.defaultGraphicUnit].identifier}
 			</div>
 			{loggedInAsAdmin &&
-				<div className={props.group.displayable.toString()}>
-					<b><FormattedMessage id="displayable" /></b> {translate(`TrueFalseType.${props.group.displayable.toString()}`)}
+				<div className="item-container">
+					<b><FormattedMessage id="displayable" /></b>
+					<span className={`status-badge ${props.group.displayable.toString()}`}>
+						{translate(`TrueFalseType.${props.group.displayable.toString()}`)}
+					</span>
 				</div>
 			}
 			{/* Only show first 30 characters so card does not get too big. Should limit to one line */}

@@ -15,12 +15,11 @@ import { useAppDispatch, useAppSelector } from '../redux/reduxHooks';
 import { selectLineChartQueryArgs } from '../redux/selectors/chartQuerySelectors';
 import { selectLineChartDeps, selectPlotlyGroupData, selectPlotlyMeterData } from '../redux/selectors/lineChartSelectors';
 import { selectLineUnitLabel } from '../redux/selectors/plotlyDataSelectors';
-import { selectSelectedLanguage } from '../redux/slices/appStateSlice';
+import { selectSelectedLanguage, selectTheme } from '../redux/slices/appStateSlice';
 import Locales from '../types/locales';
 import { useTranslate } from '../redux/componentHooks';
-import SpinnerComponent from './SpinnerComponent';
-import { setInitialXAxisRange, selectSliderRangeInterval } from '../redux/slices/graphSlice';
-import { fullSizeContainer } from '../styles/modalStyle';
+import { setInitialXAxisRange, selectSliderRangeInterval, selectYMin, selectYMax, setYMin, setYMax } from '../redux/slices/graphSlice';
+
 
 /**
  * @returns plotlyLine graphic
@@ -35,10 +34,13 @@ export default function LineChartComponent() {
 	const locale = useAppSelector(selectSelectedLanguage);
 	// initial slider range
 	const sliderRangeInterval = useAppSelector(selectSliderRangeInterval);
+	const yMin = useAppSelector(selectYMin);
+	const yMax = useAppSelector(selectYMax);
 
 	// Fetch data, and derive plotly points
 	const { data: meterPlotlyData, isFetching: meterIsFetching } = readingsApi.useLineQuery(meterArgs,
 		{
+			pollingInterval: 10000,
 			skip: meterShouldSkip,
 			// Custom Data Derivation with query hook properties.
 			selectFromResult: ({ data, ...rest }) => ({
@@ -51,6 +53,7 @@ export default function LineChartComponent() {
 
 	const { data: groupPlotlyData = stableEmptyLineReadings, isFetching: groupIsFetching } = readingsApi.useLineQuery(groupArgs,
 		{
+			pollingInterval: 10000,
 			skip: groupShouldSkip,
 			selectFromResult: ({ data, ...rest }) => ({
 				...rest,
@@ -69,7 +72,113 @@ export default function LineChartComponent() {
 	// Manage button states with useState
 	const [listOfButtons, setListOfButtons] = React.useState(defaultButtons);
 
-	const data: Partial<Plotly.PlotData>[] = React.useMemo(() => meterPlotlyData.concat(groupPlotlyData), [meterPlotlyData, groupPlotlyData]);
+	const theme = useAppSelector(selectTheme);
+	const isDarkMode = theme === 'dark';
+
+	// Updated Palette: Cyan (L1), Pink (L2), Yellow (L3), etc.
+	const themeColors = React.useMemo(() => isDarkMode
+		? ['#FF007F', '#FFCC00', '#00f2ea', '#5E5CE6', '#10B981']
+		: ['#5E5CE6', '#E11D48', '#10B981', '#F59E0B', '#EF4444'], [isDarkMode]);
+
+	const currentData: Partial<Plotly.PlotData>[] = React.useMemo(() => {
+		const rawData = meterPlotlyData.concat(groupPlotlyData);
+
+		const mappedData = rawData.map((trace, i) => {
+			const color = themeColors[i % themeColors.length];
+
+			return {
+				...trace,
+				mode: 'lines',
+				type: 'scatter',
+				line: {
+					shape: 'linear',
+					width: 2,          // uniform thin lines
+					color: color,
+					dash: 'solid'      // no dashed/dotted lines
+				},
+				fill: 'tozeroy',
+				fillcolor: color + '1A' // soft fill (10% opacity)
+			} as Partial<Plotly.PlotData>;
+		});
+
+		// ✅ Global Average — flat line, computed from 2-minute resampled data
+		if (meterPlotlyData.length > 1 && groupArgs.ids.length > 0) {
+			const allX = new Set<string>();
+			let totalSum = 0;
+			let totalCount = 0;
+			const BUCKET_MS = 2 * 60 * 1000; // 2 minutes
+
+			meterPlotlyData.forEach(trace => {
+				if (trace.x && Array.isArray(trace.x)) {
+					trace.x.forEach((x: any) => allX.add(String(x)));
+				}
+				// Resample into 2-min buckets: take one value per bucket
+				if (trace.x && trace.y && Array.isArray(trace.x) && Array.isArray(trace.y)) {
+					const buckets: Record<number, { sum: number; count: number }> = {};
+					for (let i = 0; i < trace.x.length; i++) {
+						const ts = new Date(String(trace.x[i])).getTime();
+						const y = Number(trace.y[i]);
+						if (isNaN(y) || isNaN(ts)) continue;
+						const bucketKey = Math.floor(ts / BUCKET_MS);
+						if (!buckets[bucketKey]) {
+							buckets[bucketKey] = { sum: 0, count: 0 };
+						}
+						buckets[bucketKey].sum += y;
+						buckets[bucketKey].count++;
+					}
+					// Average each bucket, then add to the overall total
+					Object.values(buckets).forEach(b => {
+						totalSum += b.sum / b.count; // avg reading in this 2-min window
+						totalCount++;
+					});
+				}
+			});
+
+			const overallAvg = totalCount > 0 ? totalSum / totalCount : 0;
+			const xArray = Array.from(allX).sort();
+
+			const averageTrace: Partial<Plotly.PlotData> = {
+				name: `Average (${overallAvg.toPrecision(5)})`,
+				x: xArray,
+				y: xArray.map(() => overallAvg),
+				type: 'scatter',
+				mode: 'lines',
+				line: {
+					shape: 'linear',
+					width: 2,
+					color: '#6B7280',
+					dash: 'dash'
+				},
+				fill: 'none',
+				hoverinfo: 'text',
+				text: xArray.map(
+					x => `<b>${x}</b><br>Average: ${overallAvg.toPrecision(6)}`
+				) as any
+			};
+
+			mappedData.unshift(averageTrace);
+		}
+
+		return mappedData;
+	}, [meterPlotlyData, groupPlotlyData, themeColors]);
+
+	// Persistent Data Buffer to prevent flashing
+	const [displayedData, setDisplayedData] = React.useState<Partial<Plotly.PlotData>[]>([]);
+
+	React.useEffect(() => {
+		// If we have data, always update
+		if (currentData.length > 0) {
+			setDisplayedData(currentData);
+		}
+		// If we define "no data" but we are NOT fetching, then it's truly empty, so clear
+		else if (!meterIsFetching && !groupIsFetching) {
+			setDisplayedData([]);
+		}
+		// If data is empty BUT we are fetching, do nothing (keep previous displayedData)
+	}, [currentData, meterIsFetching, groupIsFetching]);
+
+	const data = displayedData;
+
 	// Getting the entire x-axis range from all traces
 	// This is used to set the initial x-axis range when the component mounts.
 	// It ensures that the graph starts with a range that covers all data points. That would be used for querying the data.
@@ -97,13 +206,42 @@ export default function LineChartComponent() {
 		}
 	}, [minX, maxX]);
 
-	if (meterIsFetching || groupIsFetching) {
-		return <SpinnerComponent loading height={50} width={50} />;
-	}
+
 
 
 	// Check if there is at least one valid graph
-	const enoughData = data.find(data => data.x!.length > 1);
+	const enoughData = data.find(trace => (trace.x && (trace.x as any[]).length >= 1));
+
+	const handleRelayout = React.useMemo(() => debounce(
+		(e: PlotRelayoutEvent) => {
+			// Handle X-Axis changes (Time)
+			if (e['xaxis.range[0]'] && e['xaxis.range[1]']) {
+				const startTS = utc(e['xaxis.range[0]']);
+				const endTS = utc(e['xaxis.range[1]']);
+				const workingTimeInterval = new TimeInterval(startTS, endTS);
+				dispatch(updateSliderRange(workingTimeInterval));
+			}
+			else if (e['xaxis.range']) {
+				const range = e['xaxis.range']!;
+				const startTS = range && range[0];
+				const endTS = range && range[1];
+				dispatch(updateSliderRange(new TimeInterval(utc(startTS), utc(endTS))));
+			} else if (e['xaxis.autorange'] === true || (e as any)['autorange'] === true) {
+				dispatch(updateSliderRange(TimeInterval.unbounded()));
+			}
+
+			// Handle Y-Axis changes (Data Range), persists user pan/zoom
+			if (e['yaxis.range[0]'] && e['yaxis.range[1]']) {
+				dispatch(setYMin(e['yaxis.range[0]']));
+				dispatch(setYMax(e['yaxis.range[1]']));
+			} else if (e['yaxis.autorange'] === true || (e as any)['autorange'] === true) {
+				// If user double clicks to reset, clear manual ranges
+				dispatch(setYMin(undefined));
+				dispatch(setYMax(undefined));
+			}
+		}, 500, { leading: false, trailing: true }
+	), [dispatch]);
+
 	// Customize the layout of the plot
 	// See https://community.plotly.com/t/replacing-an-empty-graph-with-a-message/31497 for showing text not plot.
 	if (data.length === 0) {
@@ -127,7 +265,6 @@ export default function LineChartComponent() {
 				}
 			}
 		}
-		// Tries to get the range from the slider range interval, undefined if not bounded
 		const sliderRange: [string, string] | undefined = sliderRangeInterval?.getIsBounded()
 			? [
 				sliderRangeInterval.getStartTimestamp()!.utc().toISOString(),
@@ -136,63 +273,125 @@ export default function LineChartComponent() {
 			: undefined;
 		// Either sets the xRange to the minDate maxDate or the saved slider range. This keeps the range from resetting when we toggle error bars.
 		const xRange: [string, string] = sliderRange ?? [minDate, maxDate];
+
+		let yRange: [number, number] | undefined = undefined;
+		if (yMin !== undefined || yMax !== undefined) {
+			let calcMin = Number.MAX_VALUE;
+			let calcMax = -Number.MAX_VALUE; // Initialize with a very small number
+
+			// Only calculate if we need one of the bounds
+			if (yMin === undefined || yMax === undefined) {
+				for (const trace of data) {
+					if (trace.y) {
+						// Ensure y is treated as array of numbers. Flatten if needed.
+						const yArr = (Array.isArray(trace.y[0]) ? (trace.y as any[]).flat() : trace.y) as number[];
+						for (const val of yArr) {
+							if (typeof val === 'number') {
+								if (val < calcMin) calcMin = val;
+								if (val > calcMax) calcMax = val;
+							}
+						}
+					}
+				}
+				// Fallbacks if no data found
+				if (calcMin === Number.MAX_VALUE) calcMin = 0;
+				if (calcMax === -Number.MAX_VALUE) calcMax = 10;
+			}
+
+			yRange = [
+				yMin !== undefined ? yMin : calcMin,
+				yMax !== undefined ? yMax : calcMax
+			];
+		}
+
 		return (
 			<Plot
+				useResizeHandler={true}
 				data={data}
-				style={fullSizeContainer}
+				style={{ width: '100%', height: '100%' }}
 				layout={{
-					margin: { t: 0, b: 0, r: 3 }, // Eliminate top, bottom, and right margins
-					autosize: true, showlegend: true,
-					legend: { x: 0, y: 1.1, orientation: 'h' },
-					yaxis: { title: unitLabel, gridcolor: '#ddd', fixedrange: true },
-					// 'fixedrange' on the yAxis means that dragging is only allowed on the xAxis which we utilize for selecting dateRanges
+					font: { family: 'Inter, sans-serif', color: isDarkMode ? '#8b949e' : '#6B7280' },
+					paper_bgcolor: 'transparent',
+					plot_bgcolor: 'transparent',
+					margin: { t: 30, b: 40, r: 20, l: 40 },
+					autosize: true,
+					showlegend: true,
+					legend: {
+						x: 0,
+						y: 1.1,
+						orientation: 'h',
+						font: { size: 12, color: isDarkMode ? '#e6edf3' : '#374151' }
+					},
+					modebar: { orientation: 'v' },
+					yaxis: {
+						title: { text: unitLabel, font: { size: 12, color: isDarkMode ? '#8b949e' : '#4B5563' } },
+						gridcolor: isDarkMode ? '#21262d' : '#F3F4F6',
+						fixedrange: false,
+						zeroline: false,
+						tickfont: { color: isDarkMode ? '#8b949e' : '#9CA3AF', size: 11 },
+						range: yRange,
+						autorange: !yRange
+					},
 					xaxis: {
-						rangeslider: { visible: true, range: [minDate, maxDate] },
-						range: xRange,
-						showgrid: true,
-						gridcolor: '#ddd'
+					rangeslider: { visible: false },
+					range: xRange,
+					showgrid: false,
+					gridcolor: isDarkMode ? '#21262d' : '#F3F4F6',
+					tickfont: { color: isDarkMode ? '#8b949e' : '#9CA3AF', size: 11 },
+					zeroline: false
+				},
+					hovermode: 'x unified',
+					hoverlabel: {
+						bgcolor: isDarkMode ? '#161b22' : '#FFFFFF',
+						bordercolor: isDarkMode ? '#30363d' : 'transparent',
+						font: { family: 'Inter', size: 13, color: isDarkMode ? '#e6edf3' : '#111111' },
+						namelength: -1
 					}
 				}}
 				config={{
+					scrollZoom: true,
 					responsive: true,
 					displayModeBar: true,
 					modeBarButtonsToRemove: listOfButtons,
-					modeBarButtonsToAdd: [{
-						name: 'toggle-options',
-						title: translate('toggle.options'),
-						icon: Icons.pencil,
-						click: function () {
-							// # of items must differ so the length can tell which list of buttons is being set
-							setListOfButtons(listOfButtons.length === defaultButtons.length ? advancedButtons : defaultButtons); // Update the state
-						}
-					}],
+					modeBarButtonsToAdd: [
+						{
+							name: 'fullscreen',
+							title: translate('fullscreen') || 'Toggle Full Screen',
+							icon: {
+								width: 24,
+								height: 24,
+								path: 'M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z'
+							},
+							click: function (gd: any) {
+								const elt = gd.parentElement; // Get Plotly container
+								if (!document.fullscreenElement) {
+									if (elt?.requestFullscreen) {
+										elt.requestFullscreen().catch((err: Error) => {
+											alert(`Error attempting to enable fullscreen mode: ${err.message}`);
+										});
+									}
+								} else {
+									if (document.exitFullscreen) {
+										document.exitFullscreen();
+									}
+								}
+							}
+						},
+						{
+							name: 'toggle-options',
+							title: translate('toggle.options'),
+							icon: Icons.pencil,
+							click: function () {
+								// # of items must differ so the length can tell which list of buttons is being set
+								setListOfButtons(listOfButtons.length === defaultButtons.length ? advancedButtons : defaultButtons); // Update the state
+							}
+						}],
 					locale,
 					// Available Locales
 					locales: Locales
 				}}
-				onRelayout={debounce(
-					(e: PlotRelayoutEvent) => {
-						// This event emits an object that contains values indicating changes in the user's graph, such as zooming.
-						if (e['xaxis.range[0]'] && e['xaxis.range[1]']) {
-							// The event signals changes in the user's interaction with the graph.
-							// this will automatically trigger a refetch due to updating a query arg.
-							const startTS = utc(e['xaxis.range[0]']);
-							const endTS = utc(e['xaxis.range[1]']);
-							const workingTimeInterval = new TimeInterval(startTS, endTS);
-							dispatch(updateSliderRange(workingTimeInterval));
-						}
-						else if (e['xaxis.range']) {
-							// this case is when the slider knobs are dragged.
-							const range = e['xaxis.range']!;
-							const startTS = range && range[0];
-							const endTS = range && range[1];
-							dispatch(updateSliderRange(new TimeInterval(utc(startTS), utc(endTS))));
-
-						}
-					}, 500, { leading: false, trailing: true })
-				}
+				onRelayout={handleRelayout}
 			/>
 		);
-
 	}
 }

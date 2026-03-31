@@ -57,8 +57,11 @@ export default function ConversionViewComponent(props: ConversionViewComponentPr
 			<div className="item-container">
 				<b><FormattedMessage id="conversion.destination" /></b> {unitDataById[props.conversion.destinationId]?.identifier}
 			</div>
-			<div className={props.conversion.bidirectional.toString()}>
-				<b><FormattedMessage id="conversion.bidirectional" /></b> {translate(`TrueFalseType.${props.conversion.bidirectional.toString()}`)}
+			<div className="item-container">
+				<b><FormattedMessage id="conversion.bidirectional" /></b>
+				<span className={`status-badge ${props.conversion.bidirectional.toString()}`}>
+					{translate(`TrueFalseType.${props.conversion.bidirectional.toString()}`)}
+				</span>
 			</div>
 			<div className="item-container">
 				<b><FormattedMessage id="conversion.slope" /></b> {props.conversion.slope}

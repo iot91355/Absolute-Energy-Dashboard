@@ -20,6 +20,6 @@ const root = createRoot(container);
 root.render(
 	//  Provides the Redux store to all child components
 	< Provider store={store} stabilityCheck='always' >
-		< RouteComponent />
+		<RouteComponent />
 	</Provider >
 );

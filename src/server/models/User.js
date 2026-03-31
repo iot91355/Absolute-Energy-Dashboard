@@ -13,13 +13,17 @@ class User {
 	 * @param passwordHash The user's passwordHash
 	 * @param role The user's role
 	 * @param note The user note
+	 * @param image The user image
 	 */
-	constructor(id, username, passwordHash, role, note = '') {
+	constructor(id, username, passwordHash, role, note = '', image = '', email = '', mobileNo = '') {
 		this.id = id;
 		this.username = username;
 		this.passwordHash = passwordHash;
 		this.role = role;
 		this.note = note;
+		this.image = image;
+		this.email = email;
+		this.mobileNo = mobileNo;
 	}
 
 	/**
@@ -41,7 +45,7 @@ class User {
 	 */
 	static async getByID(id, conn) {
 		const row = await conn.one(sqlFile('user/get_user_by_id.sql'), { id: id });
-		return new User(row.id, row.username, row.password_hash, row.role, row.note);
+		return new User(row.id, row.username, row.password_hash, row.role, row.note, row.image, row.email, row.mobile_no);
 	}
 
 	/**
@@ -54,7 +58,7 @@ class User {
 	 */
 	static async getByUsername(username, conn) {
 		const row = await conn.oneOrNone(sqlFile('user/get_user_by_username.sql'), { username: username });
-		return row === null ? null : new User(row.id, row.username, row.password_hash, row.role, row.note);
+		return row === null ? null : new User(row.id, row.username, row.password_hash, row.role, row.note, row.image, row.email, row.mobile_no);
 	}
 
 	/**
@@ -73,7 +77,7 @@ class User {
 	 */
 	static async getAll(conn) {
 		const rows = await conn.any(sqlFile('user/get_all_users.sql'));
-		return rows.map(row => new User(row.id, row.username, undefined, row.role, row.note));
+		return rows.map(row => new User(row.id, row.username, undefined, row.role, row.note, row.image, row.email, row.mobile_no));
 	}
 
 	/**
@@ -125,11 +129,12 @@ class User {
 	 * @param username the new username
 	 * @param role the new role
 	 * @param note the new note
+	 * @param image the new image
 	 * @param conn is the connection to use.
 	 * @returns {Promise<void>}
 	 */
-	static async updateUser(id, username, role, note, conn) {
-		return conn.none(sqlFile('user/update_user.sql'), { id: id, username: username, role: role, note: note });
+	static async updateUser(id, username, role, note, image, email, mobileNo, conn) {
+		return conn.none(sqlFile('user/update_user.sql'), { id, username, role, note, image, email, mobileNo });
 	}
 
 	/**

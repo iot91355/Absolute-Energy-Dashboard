@@ -217,7 +217,7 @@ mocha.describe('readings API', () => {
                             // u4
                             name: 'kW', 
                             identifier: '', 
-                            unitRepresent: Unit.unitRepresentType.FLOW, 
+                            unitRepresent: Unit.unitRepresentType.QUANTITY, 
                             secInRate: 3600, 
                             typeOfUnit: Unit.unitType.UNIT, 
                             suffix: '', 
@@ -229,7 +229,7 @@ mocha.describe('readings API', () => {
                             // u5
                             name: 'Electric', 
                             identifier: '', 
-                            unitRepresent: Unit.unitRepresentType.FLOW, 
+                            unitRepresent: Unit.unitRepresentType.QUANTITY, 
                             secInRate: 3600, 
                             typeOfUnit: Unit.unitType.METER, 
                             suffix: '', 

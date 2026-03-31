@@ -8,8 +8,6 @@ import { graphSlice, selectBarStacking } from '../redux/slices/graphSlice';
 import { useTranslate } from '../redux/componentHooks';
 import TooltipMarkerComponent from './TooltipMarkerComponent';
 import IntervalControlsComponent from './IntervalControlsComponent';
-import { checkboxStyle, divTopBottomPadding } from '../styles/modalStyle';
-
 /**
  * @returns controls for bar page.
  */
@@ -24,11 +22,13 @@ export default function BarControlsComponent() {
 	};
 
 	return (
-		<div>
-			<div className='checkbox' style={divTopBottomPadding}>
-				<input type='checkbox' style={checkboxStyle} onChange={handleChangeBarStacking} checked={barStacking} id='barStacking' />
-				<label htmlFor='barStacking'>{translate('bar.stacking')}</label>
-				<TooltipMarkerComponent page='home' helpTextId='help.home.bar.stacking.tip' />
+		<div style={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'column' }}>
+			<div className='control-group'>
+				<div className='checkbox' style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+					<label htmlFor='barStacking' className='control-label' style={{ margin: 0, cursor: 'pointer' }}>{translate('bar.stacking')}</label>
+					<input type='checkbox' className="custom-checkbox" onChange={handleChangeBarStacking} checked={barStacking} id='barStacking' />
+					<TooltipMarkerComponent page='home' helpTextId='help.home.bar.stacking.tip' />
+				</div>
 			</div>
 			{<IntervalControlsComponent key='interval' />}
 		</div >

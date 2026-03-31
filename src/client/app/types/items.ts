@@ -81,9 +81,12 @@ export interface TooltipItems {
 export interface User {
 	id?: number;
 	username: string;
+	email?: string;
+	mobileNo?: string;
 	role: UserRole;
 	password?: string;
 	note: string;
+	image?: string;
 }
 
 /**
@@ -109,8 +112,11 @@ export const userDefaults = {
 	password: '',
 	confirmPassword: '',
 	note: '',
+	image: '',
 	role: UserRole.INVALID,
 	passwordMatch: true,
 	disableDelete: false,
-	passwordLength: true
+	passwordLength: true,
+	email: '',
+	mobileNo: ''
 };

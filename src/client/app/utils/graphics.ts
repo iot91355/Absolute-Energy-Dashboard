@@ -24,7 +24,10 @@ export function lineUnitLabel(selectUnitState: UnitData, currentSelectedRate: Li
 	// Quantity and flow units have different unit labels.
 	// Look up the type of unit if it is for quantity/flow/raw and decide what to do.
 	// Bar graphics are always quantities.
-	if (selectUnitState.identifier === 'kWh' || selectUnitState.identifier === 'kW') {
+	// Treat variations like 'kWh1_(Imp)' as kWh as well. Use a loose match to catch
+	// site-specific identifiers that include the base unit text.
+	const idLower = (selectUnitState.identifier || '').toLowerCase();
+	if (idLower.includes('kwh') || idLower === 'kw') {
 		// This is a special case. kWh has a general meaning and the flow equivalent is kW.
 		// A kW is a Joule/sec. While it is possible to convert to another rate, OED is not
 		// going to allow that. If you want that then the site should add Joule as a unit.
@@ -38,12 +41,15 @@ export function lineUnitLabel(selectUnitState: UnitData, currentSelectedRate: Li
 		// A raw unit just uses the identifier.
 		// The y-axis label is the same as the identifier.
 		unitLabel = selectUnitState.identifier;
-	} else if (selectUnitState.unitRepresent === UnitRepresentType.quantity || selectUnitState.unitRepresent === UnitRepresentType.flow) {
-		// If it is a quantity or flow unit then it is a rate so indicate by dividing by the time interval
+	} else if (selectUnitState.unitRepresent === UnitRepresentType.flow) {
+		// If it is a flow unit then it is a rate so indicate by dividing by the time interval
 		// which is always one hour for OED.
 		unitLabel = selectUnitState.identifier + ' / ' + translate(currentSelectedRate.label);
-		// Rate scaling is needed
+		// Rate scaling is needed for flows
 		needsRateScaling = true;
+	} else if (selectUnitState.unitRepresent === UnitRepresentType.quantity) {
+		// Quantity units are not rates; show the identifier as-is.
+		unitLabel = selectUnitState.identifier;
 	}
 	if (areaNormalization) {
 		unitLabel += ' / ' + translate(`AreaUnitType.${selectedAreaUnit}`);

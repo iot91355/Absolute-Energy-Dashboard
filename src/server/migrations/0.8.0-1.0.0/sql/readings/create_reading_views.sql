@@ -398,6 +398,9 @@ bar_width_days: The number of days to use for the bar width.
 start_timestamp: The start timestamp of the data to return.
 end_timestamp: The end timestamp of the data to return.
  */
+
+DROP FUNCTION IF EXISTS meter_bar_readings_unit(integer[], integer, integer, timestamp, timestamp) CASCADE;
+DROP FUNCTION IF EXISTS group_bar_readings_unit(integer[], integer, integer, timestamp, timestamp) CASCADE;
 CREATE OR REPLACE FUNCTION meter_bar_readings_unit (
 	meter_ids INTEGER[],
 	graphic_unit_id INTEGER,

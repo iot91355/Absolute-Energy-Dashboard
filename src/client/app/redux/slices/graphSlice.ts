@@ -23,9 +23,10 @@ const defaultState: GraphState = {
 	selectedAreaUnit: AreaUnitType.none,
 	lastAddedMeterOrGroup: undefined,
 	initialXAxisRange: TimeInterval.unbounded(),
-	queryTimeInterval: TimeInterval.unbounded(),
+	// Default to today (from start of day to now)
+	queryTimeInterval: new TimeInterval(moment.utc().startOf('day'), moment.utc()),
 	rangeSliderInterval: TimeInterval.unbounded(),
-	duration: moment.duration(4, 'weeks'),
+	duration: moment.duration(1, 'day'),
 	comparePeriod: ComparePeriod.Week,
 	compareTimeInterval: calculateCompareTimeInterval(ComparePeriod.Week, moment()),
 	compareSortingOrder: SortingOrder.Descending,
@@ -41,7 +42,10 @@ const defaultState: GraphState = {
 	},
 	hotlinked: false,
 	shiftAmount: ShiftAmount.none,
-	shiftTimeInterval: TimeInterval.unbounded()
+	shiftTimeInterval: TimeInterval.unbounded(),
+	yMin: undefined,
+	yMax: undefined,
+	chartRotation: undefined
 };
 
 interface History<T> {
@@ -170,6 +174,15 @@ export const graphSlice = createSlice({
 		},
 		setInitialXAxisRange: (state, action: PayloadAction<TimeInterval>) => {
 			state.current.initialXAxisRange = action.payload;
+		},
+		setYMin: (state, action: PayloadAction<number | undefined>) => {
+			state.current.yMin = action.payload;
+		},
+		setYMax: (state, action: PayloadAction<number | undefined>) => {
+			state.current.yMax = action.payload;
+		},
+		setChartRotation: (state, action: PayloadAction<number | undefined>) => {
+			state.current.chartRotation = action.payload;
 		}
 
 	},
@@ -300,6 +313,7 @@ export const graphSlice = createSlice({
 					current.chartToRender = defaultChartToRender;
 					current.barStacking = defaultBarStacking;
 					current.areaNormalization = defaultAreaNormalization;
+					current.areaNormalization = defaultAreaNormalization;
 				}
 			});
 	},
@@ -333,7 +347,10 @@ export const graphSlice = createSlice({
 		selectPlotlySliderMin: state => state.current.rangeSliderInterval.getStartTimestamp()?.utc().toDate().toISOString(),
 		selectPlotlySliderMax: state => state.current.rangeSliderInterval.getEndTimestamp()?.utc().toDate().toISOString(),
 		selectShiftAmount: state => state.current.shiftAmount,
-		selectShiftTimeInterval: state => state.current.shiftTimeInterval
+		selectShiftTimeInterval: state => state.current.shiftTimeInterval,
+		selectYMin: state => state.current.yMin,
+		selectYMax: state => state.current.yMax,
+		selectChartRotation: state => state.current.chartRotation
 	}
 });
 
@@ -353,7 +370,8 @@ export const {
 	selectSliderRangeInterval, selectDefaultGraphState,
 	selectHistoryIsDirty, selectPlotlySliderMax,
 	selectPlotlySliderMin, selectShiftAmount,
-	selectShiftTimeInterval, selectInitialXAxisRange
+	selectShiftTimeInterval, selectInitialXAxisRange,
+	selectYMin, selectYMax, selectChartRotation
 } = graphSlice.selectors;
 
 // actionCreators exports
@@ -372,6 +390,6 @@ export const {
 	updateThreeDMeterOrGroupID, updateThreeDReadingInterval,
 	updateThreeDMeterOrGroupInfo, updateShiftAmount,
 	setInitialXAxisRange, updateTimeIntervalAndSliderRange,
-	updateShiftTimeInterval
+	updateShiftTimeInterval, setYMin, setYMax, setChartRotation
 } = graphSlice.actions;
 

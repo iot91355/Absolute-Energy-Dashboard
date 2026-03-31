@@ -8,8 +8,8 @@ import * as React from 'react';
 import * as moment from 'moment-timezone';
 import { orderBy } from 'lodash';
 import {
-	Alert, Button, Dropdown, DropdownItem, DropdownMenu, DropdownToggle,
-	FormFeedback, FormGroup, Input, Label, Modal, ModalBody, ModalHeader,
+	Button, Dropdown, DropdownItem, DropdownMenu, DropdownToggle,
+	Input, Label, Modal, ModalBody, ModalHeader,
 	Pagination, PaginationItem, PaginationLink, Table
 } from 'reactstrap';
 import DateRangePicker from '@wojtekmaj/react-daterange-picker';
@@ -18,7 +18,6 @@ import { selectSelectedLanguage } from '../../redux/slices/appStateSlice';
 import { logsApi } from '../../utils/api';
 import { TimeInterval } from '../../../../common/TimeInterval';
 import { dateRangeToTimeInterval, timeIntervalToDateRange } from '../../utils/dateRangeCompatibility';
-import { titleStyle } from '../../styles/modalStyle';
 import { useTranslate } from '../../redux/componentHooks';
 
 // number of log messages to display per page
@@ -164,194 +163,206 @@ export default function LogMsgComponent() {
 	}
 
 	return (
-		<>
-			<h1 style={titleStyle}>{translate('log.messages')}</h1>
-
-			{/* Filter log messages by type, date range, and number of logs for fetching */}
-			<div style={logFilterStyle}>
-				<Dropdown isOpen={updateLogDropdown} toggle={() => setUpdateLogDropdown(!updateLogDropdown)}>
-					<DropdownToggle color='primary' caret>{translate('log.type')}</DropdownToggle>
-					<DropdownMenu>
-						<DropdownItem key='selectAll' toggle={false}>
-							<Label check>
-								<Input
-									type="checkbox"
-									checked={selectAllUpdate}
-									onChange={handleUpdateSelectAll}
-								/> {translate('select.all')}
-							</Label>
-						</DropdownItem>
-						{logTypes.map(logType => (
-							<DropdownItem key={logType} toggle={false}>
-								<Label check>
-									<Input
-										type="checkbox"
-										checked={selectedUpdateLogTypes.includes(logType)}
-										onChange={() => handleUpdateCheckboxChange(logType)}
-									/> {logType}
-								</Label>
-							</DropdownItem>
-						))}
-					</DropdownMenu>
-				</Dropdown>
-				<FormGroup style={{ padding: 0 }} check>
-					<Label for="dateRange" style={{ fontWeight: 'bold', margin: '0' }}>
-						{translate('date.range')}
-					</Label>
-					<DateRangePicker
-						id="dateRange"
-						value={timeIntervalToDateRange(logDateRange)}
-						onChange={e => setLogDateRange(dateRangeToTimeInterval(e))}
-						minDate={new Date(1970, 0, 1)}
-						maxDate={new Date()}
-						// Formats Dates, and Calendar months base on locale
-						locale={locale}
-						calendarIcon={null}
-						calendarProps={{ defaultView: 'year' }} />
-				</FormGroup>
-				<FormGroup style={{ padding: 0 }} check>
-					<Label for="logLimit" style={{ fontWeight: 'bold', margin: '0' }}>
-						{translate('num.logs.display')}
-					</Label>
-					<Input
-						id="logLimit"
-						name="logLimit"
-						placeholder={translate('from.1.to.1000')}
-						type="number"
-						onChange={e => setLogLimit(e.target.valueAsNumber)}
-						invalid={!logLimit || logLimit < 1 || logLimit > 1000}
-						value={logLimit}
-					/>
-					<FormFeedback>
-						{translate('log.limit.required')}
-					</FormFeedback>
-				</FormGroup>
-				<Button
-					color='primary'
-					disabled={buttonAvailable || !logLimit || logLimit < 1 || logLimit > 1000 || selectedUpdateLogTypes.length === 0}
-					onClick={handleShowLogTable}
-				>
-					{translate('update')[0].toUpperCase() + translate('update').slice(1)}
-				</Button>
+		<div className="container-fluid pf-5" style={{ fontFamily: 'Inter, sans-serif', padding: '20px' }}>
+			{/* Header */}
+			<div className="mb-4">
+				<h2 style={{ fontWeight: 'bold', fontSize: '24px', margin: 0 }}>Logs</h2>
 			</div>
 
-			{/* Display log messages table */}
-			{logs.length > 0 ?
-				<Table style={tableStyle} bordered hover>
-					<thead style={headerStyle}>
-						<tr>
-							<th>
-								<Dropdown isOpen={typeTableDropdown} toggle={() => setTypeTableDropdown(!typeTableDropdown)}>
-									<DropdownToggle color='primary' caret>{translate('log.type')}</DropdownToggle>
-									<DropdownMenu>
-										<DropdownItem key='selectAll' toggle={false}>
-											<Label check>
-												<Input
-													type="checkbox"
-													checked={selectAllTable}
-													onChange={handleTableSelectAll}
-												/> {translate('select.all')}
-											</Label>
-										</DropdownItem>
-										{logTypes.map(logType => (
-											<DropdownItem key={logType} toggle={false}>
-												<Label check>
-													<Input
-														type="checkbox"
-														checked={selectedTableLogTypes.includes(logType)}
-														onChange={() => handleTableCheckboxChange(logType)}
-													/> {logType}
-												</Label>
-											</DropdownItem>
-										))}
-									</DropdownMenu>
-								</Dropdown>
-							</th>
-							<th>{translate('log.message')}</th>
-							<th onClick={handleDateSort} style={{ cursor: 'pointer' }}>
-								{translate('log.time')} {dateSortOrder === 'asc' ? '↑' : '↓'}
-							</th>
-						</tr>
-					</thead>
-					<tbody style={bodyStyle}>
-						{paginatedLogs.map((log, index) => (
-							<tr key={index + 1}>
-								<td>{log.logType}</td>
-								<td
-									style={{ cursor: 'pointer' }}
-									onClick={() => handleLogMessageModal(log.logType, log.logTime, log.logMessage)}
-								>
-									{log.logMessage.length > 80 ? `${log.logMessage.slice(0, 80)} ...` : log.logMessage}
-								</td>
-								<td>{moment.parseZone(log.logTime).format('LL LTS')}</td>
-							</tr>
-						))}
-					</tbody>
-				</Table>
-				:
-				<Alert style={{ textAlign: 'center', margin: '2% 25% 25%' }}>{translate('no.logs')}</Alert>
-			}
+			{/* Filter Section Card */}
+			<div className="p-3 rounded mb-4" style={{ backgroundColor: 'var(--card-bg, #fff)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', border: '1px solid var(--card-border, #e9ecef)' }}>
+				<div className="d-flex align-items-center flex-wrap gap-3">
+					{/* Log Type Filter for Fetching */}
+					<Dropdown isOpen={updateLogDropdown} toggle={() => setUpdateLogDropdown(!updateLogDropdown)}>
+						<DropdownToggle color='primary' caret style={{ padding: '8px 24px', fontWeight: 500 }}>
+							{translate('log.type')}
+						</DropdownToggle>
+						<DropdownMenu>
+							<DropdownItem key='selectAll' toggle={false}>
+								<Label check style={{ cursor: 'pointer', margin: 0, width: '100%' }}>
+									<Input
+										type="checkbox"
+										checked={selectAllUpdate}
+										onChange={handleUpdateSelectAll}
+										style={{ marginRight: '8px' }}
+									/> {translate('select.all')}
+								</Label>
+							</DropdownItem>
+							{logTypes.map(logType => (
+								<DropdownItem key={logType} toggle={false}>
+									<Label check style={{ cursor: 'pointer', margin: 0, width: '100%' }}>
+										<Input
+											type="checkbox"
+											checked={selectedUpdateLogTypes.includes(logType)}
+											onChange={() => handleUpdateCheckboxChange(logType)}
+											style={{ marginRight: '8px' }}
+										/> {logType}
+									</Label>
+								</DropdownItem>
+							))}
+						</DropdownMenu>
+					</Dropdown>
 
-			{/* pagination */}
-			{!showAllLogs && logs.length !== 0 && <Pagination aria-label="Log pagination" style={{ justifyContent: 'center', margin: '1% auto' }}>
-				<>
-					<PaginationItem disabled={currentPage === 1}>
-						<PaginationLink first onClick={() => setCurrentPage(1)} />
-					</PaginationItem><PaginationItem disabled={currentPage === 1}>
-						<PaginationLink previous onClick={() => setCurrentPage(currentPage - 1)} />
-					</PaginationItem>
+					{/* Date Range */}
+					<div className="d-flex align-items-center">
+						<Label for="dateRange" style={{ margin: '0 12px 0 0', whiteSpace: 'nowrap', fontWeight: 500, color: 'var(--text-value, #495057)' }}>
+							{translate('date.range')}
+						</Label>
+						<div style={{ border: '1px solid var(--card-border, #ced4da)', borderRadius: '4px', padding: '4px 8px', backgroundColor: 'var(--card-bg, #fff)' }}>
+							<DateRangePicker
+								id="dateRange"
+								value={timeIntervalToDateRange(logDateRange)}
+								onChange={e => setLogDateRange(dateRangeToTimeInterval(e))}
+								minDate={new Date(1970, 0, 1)}
+								maxDate={new Date()}
+								locale={locale}
+								calendarIcon={null}
+								calendarProps={{ defaultView: 'year' }}
+								clearIcon={null}
+								className="border-0"
+							/>
+						</div>
+					</div>
 
-					{Array.from({ length: totalPages }, (_, index) => (
-						<PaginationItem key={index + 1} active={currentPage === index + 1}>
-							<PaginationLink onClick={() => setCurrentPage(index + 1)}>
-								{index + 1}
-							</PaginationLink>
-						</PaginationItem>
-					))}
+					{/* Number of Logs */}
+					<div className="d-flex align-items-center">
+						<Label for="logLimit" style={{ margin: '0 12px 0 0', whiteSpace: 'nowrap', fontWeight: 500, color: 'var(--text-value, #495057)' }}>
+							{translate('num.logs.display')}
+						</Label>
+						<Input
+							id="logLimit"
+							name="logLimit"
+							type="number"
+							bsSize="sm"
+							style={{ width: '80px', textAlign: 'center' }}
+							onChange={e => setLogLimit(e.target.valueAsNumber)}
+							invalid={!logLimit || logLimit < 1 || logLimit > 1000}
+							value={logLimit}
+						/>
+					</div>
 
-					<PaginationItem disabled={currentPage === totalPages}>
-						<PaginationLink next onClick={() => setCurrentPage(currentPage + 1)} />
-					</PaginationItem><PaginationItem disabled={currentPage === totalPages}>
-						<PaginationLink last onClick={() => setCurrentPage(totalPages)} />
-					</PaginationItem>
-				</>
-			</Pagination >}
+					{/* Update Button */}
+					<Button
+						color='primary'
+						disabled={buttonAvailable || !logLimit || logLimit < 1 || logLimit > 1000 || selectedUpdateLogTypes.length === 0}
+						onClick={handleShowLogTable}
+						style={{ padding: '8px 32px', fontWeight: 500 }}
+					>
+						{translate('update')[0].toUpperCase() + translate('update').slice(1)}
+					</Button>
+				</div>
+			</div>
 
-			{/* Show all logs or in pages button */}
-			{logs.length > 0 &&
-				<Button color='primary' style={{ margin: '0% 40% 1%' }} onClick={() => setShowAllLogs(!showAllLogs)}>
-					{!showAllLogs ? `${translate('show.all.logs')} (${logs.length})` : translate('show.in.pages')}
-				</Button>}
+			{/* Logs Table Card */}
+			<div className="rounded p-4" style={{ backgroundColor: 'var(--card-bg, #fff)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', border: '1px solid var(--card-border, #e9ecef)', minHeight: '400px' }}>
+				{logs.length > 0 ? (
+					<>
+						<Table borderless hover style={{ marginBottom: 0, color: 'var(--text-value, #212529)' }}>
+							<thead style={{ borderBottom: '1px solid var(--divider-color, #dee2e6)' }}>
+								<tr>
+									<th style={{ width: '150px', paddingBottom: '16px' }}>
+										<Dropdown isOpen={typeTableDropdown} toggle={() => setTypeTableDropdown(!typeTableDropdown)}>
+											<DropdownToggle color='primary' caret size="sm" style={{ width: '100%', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+												{translate('log.type')}
+											</DropdownToggle>
+											<DropdownMenu>
+												<DropdownItem key='selectAll' toggle={false}>
+													<Label check style={{ cursor: 'pointer', margin: 0, width: '100%' }}>
+														<Input
+															type="checkbox"
+															checked={selectAllTable}
+															onChange={handleTableSelectAll}
+															style={{ marginRight: '8px' }}
+														/> {translate('select.all')}
+													</Label>
+												</DropdownItem>
+												{logTypes.map(logType => (
+													<DropdownItem key={logType} toggle={false}>
+														<Label check style={{ cursor: 'pointer', margin: 0, width: '100%' }}>
+															<Input
+																type="checkbox"
+																checked={selectedTableLogTypes.includes(logType)}
+																onChange={() => handleTableCheckboxChange(logType)}
+																style={{ marginRight: '8px' }}
+															/> {logType}
+														</Label>
+													</DropdownItem>
+												))}
+											</DropdownMenu>
+										</Dropdown>
+									</th>
+									<th style={{ paddingBottom: '16px', color: 'var(--text-value, #495057)', verticalAlign: 'middle' }}>{translate('log.message')}</th>
+									<th
+										onClick={handleDateSort}
+										style={{ cursor: 'pointer', paddingBottom: '16px', color: 'var(--text-value, #495057)', textAlign: 'right', verticalAlign: 'middle', width: '250px' }}
+									>
+										{translate('log.time')} {dateSortOrder === 'asc' ? '↑' : '↓'}
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+								{paginatedLogs.map((log, index) => (
+									<tr key={index + 1} style={{ borderBottom: '1px solid var(--divider-color, #f1f3f5)' }}>
+										<td style={{ verticalAlign: 'middle' }}>{log.logType}</td>
+										<td
+											style={{ cursor: 'pointer', verticalAlign: 'middle', color: 'var(--text-value, #212529)' }}
+											onClick={() => handleLogMessageModal(log.logType, log.logTime, log.logMessage)}
+										>
+											{log.logMessage.length > 100 ? `${log.logMessage.slice(0, 100)} ...` : log.logMessage}
+										</td>
+										<td style={{ textAlign: 'right', verticalAlign: 'middle', color: 'var(--text-label, #495057)' }}>
+											{moment.parseZone(log.logTime).format('LL LTS')}
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</Table>
+
+						{/* Pagination and Show All */}
+						<div className="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+							<Button color='link' onClick={() => setShowAllLogs(!showAllLogs)} style={{ textDecoration: 'none', padding: 0 }}>
+								{!showAllLogs ? `${translate('show.all.logs')} (${logs.length})` : translate('show.in.pages')}
+							</Button>
+
+							{!showAllLogs && logs.length !== 0 && (
+								<Pagination aria-label="Log pagination" style={{ margin: 0 }}>
+									<PaginationItem disabled={currentPage === 1}>
+										<PaginationLink first onClick={() => setCurrentPage(1)} />
+									</PaginationItem>
+									<PaginationItem disabled={currentPage === 1}>
+										<PaginationLink previous onClick={() => setCurrentPage(currentPage - 1)} />
+									</PaginationItem>
+									{Array.from({ length: totalPages }, (_, index) => (
+										<PaginationItem key={index + 1} active={currentPage === index + 1}>
+											<PaginationLink onClick={() => setCurrentPage(index + 1)}>
+												{index + 1}
+											</PaginationLink>
+										</PaginationItem>
+									))}
+									<PaginationItem disabled={currentPage === totalPages}>
+										<PaginationLink next onClick={() => setCurrentPage(currentPage + 1)} />
+									</PaginationItem>
+									<PaginationItem disabled={currentPage === totalPages}>
+										<PaginationLink last onClick={() => setCurrentPage(totalPages)} />
+									</PaginationItem>
+								</Pagination>
+							)}
+						</div>
+					</>
+				) : (
+					<div className="d-flex justify-content-center align-items-center" style={{ height: '200px', color: '#adb5bd' }}>
+						{translate('no.logs')}
+					</div>
+				)}
+			</div>
 
 			{/* Modal for displaying full log message */}
-			<Modal isOpen={modalOpen} toggle={() => setModalOpen(!modalOpen)} centered>
+			<Modal isOpen={modalOpen} toggle={() => setModalOpen(!modalOpen)} centered size="lg">
 				<ModalHeader toggle={() => setModalOpen(!modalOpen)}>{modelHeader}</ModalHeader>
-				<ModalBody>
+				<ModalBody style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '14px', padding: '20px' }}>
 					{modalLogMessage}
 				</ModalBody>
-			</Modal >
-		</>
+			</Modal>
+		</div>
 	);
 }
-
-const headerStyle: React.CSSProperties = {
-	textAlign: 'center'
-};
-const bodyStyle: React.CSSProperties = {
-	textAlign: 'left'
-};
-
-const tableStyle: React.CSSProperties = {
-	width: '90%',
-	margin: '1% auto'
-};
-
-const logFilterStyle: React.CSSProperties = {
-	display: 'flex',
-	justifyContent: 'center',
-	gap: '1.5%',
-	alignItems: 'center',
-	margin: 'auto 25%',
-	padding: '20px',
-	border: '2px solid lightgrey'
-};

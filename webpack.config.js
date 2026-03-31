@@ -1,15 +1,17 @@
+/* eslint-disable comma-dangle */
+/* eslint-disable no-undef */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
-const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
-const webpack = require('webpack');
-const path = require('path');
+const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
+const { DefinePlugin } = require('webpack');
+const { resolve: _resolve } = require('path');
 
-const BUILD_DIR = path.resolve(__dirname, 'src/client/public/app');
-const APP_DIR = path.resolve(__dirname, 'src/client/app');
+const BUILD_DIR = _resolve(__dirname, 'src/client/public/app');
+const APP_DIR = _resolve(__dirname, 'src/client/app');
 
 const config = {
 	// Enable sourcemaps for debugging webpack's output.
@@ -17,9 +19,7 @@ const config = {
 	entry: {
 		application: APP_DIR + '/index.tsx',
 	},
-	cache: {
-		type: 'filesystem'
-	},
+	cache: false,
 	resolve: {
 		fallback: {
 			'buffer': require.resolve('buffer/'),
@@ -30,6 +30,10 @@ const config = {
 		// Add '.ts' and '.tsx' as resolvable extensions.
 		extensions: ['.css', '.ts', '.tsx', '.js', '.jsx', '.json']
 	},
+	watchOptions: {
+		poll: 1000,
+		ignored: /node_modules|src\/client\/public\/app/,
+	},
 
 	// Ignore warnings about bundle size
 	performance: {
@@ -39,13 +43,19 @@ const config = {
 		rules: [
 			// All TypeScript ('.ts' or '.tsx') will be handled by 'awesome-typescript-loader'.
 			{ test: /\.[jt]sx?$/, exclude: /node_modules/, use: 'ts-loader' },
+			{
+				test: /\.(png|jpe?g|gif|svg)$/i,
+				type: 'asset/resource'
+			},
 			// CSS stylesheet loader.
-			{ test: /\.css$/, use: [
-				{loader: 'style-loader'},
-				{loader: 'css-loader'}
-			] },
+			{
+				test: /\.css$/, use: [
+					{ loader: 'style-loader' },
+					{ loader: 'css-loader' }
+				]
+			},
 			// All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
-			{ enforce: 'pre', test: /\.js$/, use:[{loader: 'source-map-loader'}] }
+			{ enforce: 'pre', test: /\.js$/, use: [{ loader: 'source-map-loader' }] }
 		]
 	},
 	output: {
@@ -60,17 +70,25 @@ const config = {
 
 if (process.env.NODE_ENV === 'production') {
 	config.plugins.push(
-		new webpack.DefinePlugin({
+		new DefinePlugin({
 			'process.env': {
 				NODE_ENV: JSON.stringify('production')
 			}
 		}),
-		new TerserPlugin({
-			terserOptions: {
-				sourceMap: true
-			}
-		})
 	);
+
+	// Use Terser as an optimization minimizer (not a plugin entry)
+	config.optimization = {
+		minimize: true,
+		minimizer: [
+			new TerserPlugin({
+				extractComments: false,
+				terserOptions: {
+					format: { comments: false }
+				}
+			})
+		]
+	};
 }
 
 module.exports = config;

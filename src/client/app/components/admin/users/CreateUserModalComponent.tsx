@@ -82,6 +82,22 @@ export default function CreateUserModal() {
 		}));
 	};
 
+	const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		if (e.target.files && e.target.files[0]) {
+			const file = e.target.files[0];
+			const reader = new FileReader();
+
+			reader.onloadend = () => {
+				setUserDetails(prevDetails => ({
+					...prevDetails,
+					image: reader.result as string
+				}));
+			};
+
+			reader.readAsDataURL(file);
+		}
+	};
+
 	// Methods to reset form fields
 	const resetForm = () => {
 		setUserDetails(userDefaults);
@@ -108,7 +124,7 @@ export default function CreateUserModal() {
 	// End Modal show/close
 
 	const handleSubmit = async () => {
-		const newUser: User = { username: userDetails.username, role: userDetails.role, password: userDetails.password, note: userDetails.note };
+		const newUser: User = { username: userDetails.username, role: userDetails.role, password: userDetails.password, note: userDetails.note, image: userDetails.image, email: userDetails.email, mobileNo: userDetails.mobileNo };
 		createUser(newUser)
 			.unwrap()
 			.then(() => {
@@ -130,7 +146,10 @@ export default function CreateUserModal() {
 			userDetails.username !== userDefaults.username
 			|| userDetails.password !== userDefaults.password
 			|| userDetails.note !== userDefaults.note
-			|| userDetails.role !== userDefaults.role;
+			|| userDetails.role !== userDefaults.role
+			|| userDetails.image !== userDefaults.image
+			|| userDetails.email !== userDefaults.email
+			|| userDetails.mobileNo !== userDefaults.mobileNo;
 		// Automatically checks for unsaved changes and addresses the issue
 		// of having to manually set the setHasUnsavedChanges
 		// If editMade is true, then hasUnsavedChanges will be set to true.
@@ -236,6 +255,32 @@ export default function CreateUserModal() {
 						<Row xs='1' lg='2'>
 							<Col>
 								<FormGroup>
+									<Label for='email'>Email</Label>
+									<Input
+										id='email'
+										name='email'
+										type='email'
+										value={userDetails.email || ''}
+										onChange={e => handleStringChange(e)}
+									/>
+								</FormGroup>
+							</Col>
+							<Col>
+								<FormGroup>
+									<Label for='mobileNo'>Mobile Number</Label>
+									<Input
+										id='mobileNo'
+										name='mobileNo'
+										type='text'
+										value={userDetails.mobileNo || ''}
+										onChange={e => handleStringChange(e)}
+									/>
+								</FormGroup>
+							</Col>
+						</Row>
+						<Row xs='1' lg='2'>
+							<Col>
+								<FormGroup>
 									<Label for='password'>
 										{translate('password')}
 									</Label>
@@ -287,6 +332,29 @@ export default function CreateUserModal() {
 									<FormFeedback>
 										{translate('error.required')}
 									</FormFeedback>
+								</FormGroup>
+							</Col>
+							<Col>
+								<FormGroup>
+									<Label for='image'>
+										{translate('user.image')}
+									</Label>
+									<Input
+										id='image'
+										name='image'
+										type='file'
+										accept='image/*'
+										onChange={handleImageChange}
+									/>
+									{userDetails.image && (
+										<div className="mt-2">
+											<img
+												src={userDetails.image}
+												alt="User Preview"
+												style={{ maxHeight: '100px', maxWidth: '100%' }}
+											/>
+										</div>
+									)}
 								</FormGroup>
 							</Col>
 						</Row>

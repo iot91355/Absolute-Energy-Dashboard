@@ -1,8 +1,8 @@
+/* eslint-disable max-len */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import * as React from 'react';
 import { useAppSelector } from '../redux/reduxHooks';
 import { selectOptionsVisibility } from '../redux/slices/appStateSlice';
 import { selectChartToRender } from '../redux/slices/graphSlice';
@@ -12,10 +12,12 @@ import LineChartComponent from './LineChartComponent';
 import MapChartComponent from './MapChartComponent';
 import MultiCompareChartComponent from './MultiCompareChartComponent';
 import RadarChartComponent from './RadarChartComponent';
-import ThreeDComponent from './ThreeDComponent';
 import UIOptionsComponent from './UIOptionsComponent';
 import PlotNavComponent from './PlotNavComponent';
 import CompareLineChartComponent from './CompareLineChartComponent';
+// import Sidebar from './sidebar';
+import Nav from './Nav';
+import './dashboard.css';
 
 /**
  * React component that controls the dashboard
@@ -26,24 +28,41 @@ export default function DashboardComponent() {
 	const optionsVisibility = useAppSelector(selectOptionsVisibility);
 
 	return (
-		<div className='container-fluid flexGrowOne' >
-			<div className='row' style={{ overflowY: 'hidden', height: '100%' }}>
-				<div className={`${optionsVisibility ? 'col-2 d-none d-lg-block' : 'd-none'}`} style={{ height: '100%' }}>
+		<>
+			<Nav style={{ marginBottom: '20px' }} />
+			{/* Options Panel (Chart Controls) - Now a Row on Top */}
+			{optionsVisibility && (
+				<div className="options-panel">
 					<UIOptionsComponent />
 				</div>
-				<div className={`${optionsVisibility ? 'col-12 col-lg-10' : 'col-12'} align-self-auto text-center`} style={{ height: '100%' }}>
-					<div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-						<PlotNavComponent />
+			)}
+
+			{/* Charts Area */}
+			<div className="dashboard-container" style={{ margin: 0, flexGrow: 1, height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: '0' }}>
+				<div className="dashboard-main">
+					<div className="chart-card-container">
+						<div style={{
+							position: 'absolute',
+							top: '0px',
+							left: 'auto',
+							right: '180px',
+							zIndex: 50,
+							pointerEvents: 'none', // Allow clicks to pass through spacer
+							width: 'auto',
+							padding: '10px'
+						}}>
+							<PlotNavComponent />
+						</div>
 						{chartToRender === ChartTypes.line && <LineChartComponent />}
 						{chartToRender === ChartTypes.bar && <BarChartComponent />}
 						{chartToRender === ChartTypes.compare && <MultiCompareChartComponent />}
 						{chartToRender === ChartTypes.map && <MapChartComponent />}
-						{chartToRender === ChartTypes.threeD && <ThreeDComponent />}
+						{/* 3D rendering disabled */}
 						{chartToRender === ChartTypes.radar && <RadarChartComponent />}
 						{chartToRender === ChartTypes.compareLine && <CompareLineChartComponent />}
 					</div>
 				</div>
 			</div>
-		</div >
+		</>
 	);
 }

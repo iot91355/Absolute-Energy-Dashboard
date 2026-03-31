@@ -2,8 +2,6 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import * as React from 'react';
-import { Col, Container, Row } from 'reactstrap';
 import { stableEmptyUsers, userApi } from '../../../redux/api/userApi';
 import { useTranslate } from '../../../redux/componentHooks';
 import TooltipHelpComponent from '../../TooltipHelpComponent';
@@ -38,26 +36,18 @@ export default function UserDetailComponent() {
 						<TooltipMarkerComponent page='users' helpTextId={tooltipStyle.tooltipUsersView} />
 					</div>
 				</h2>
-				<div className='edit-btn'>
+				<div className='edit-btn' style={{ paddingRight: '24px' }}>
 					<CreateUserModalComponent />
 				</div>
-				<Container className='card-container'>
-					<Row className='justify-content-center'>
-						{// display users and sort by username alphabetically
-							[...users]
-								.sort((a, b) => a.username.localeCompare(b.username, locale, { sensitivity : 'accent' }))
-								.map(user => (
-									<Col
-										key={user.username}
-										className="d-flex justify-content-center mb-3"
-										xs="auto"
-									>
-										<UserViewComponent user={user} />
-									</Col>
-								))
-						}
-					</Row>
-				</Container>
+				<div className='card-container'>
+					{// display users and sort by username alphabetically
+						[...users]
+							.sort((a, b) => a.username.localeCompare(b.username, locale, { sensitivity: 'accent' }))
+							.map(user => (
+								<UserViewComponent key={user.username} user={user} />
+							))
+					}
+				</div>
 			</div>
 		</div>
 	);

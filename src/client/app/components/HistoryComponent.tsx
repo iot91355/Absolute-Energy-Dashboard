@@ -2,12 +2,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import * as React from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/reduxHooks';
 import { selectForwardHistory, selectPrevHistory } from '../redux/slices/graphSlice';
 import { historyStepBack, historyStepForward } from '../redux/actions/extraActions';
 import TooltipMarkerComponent from './TooltipMarkerComponent';
-import { rowFlexStart } from '../styles/modalStyle';
+import '../components/dashboard.css';
 
 /**
  * @returns Renders a history component with previous and next buttons.
@@ -18,22 +17,27 @@ export default function HistoryComponent() {
 	const forwardStack = useAppSelector(selectForwardHistory);
 
 	return (
-		<div style={rowFlexStart}>
-			<svg width={20} height={20} style={{ visibility: !backStack.length ? 'hidden' : 'visible', cursor: 'pointer' }}
-				onClick={() => dispatch(historyStepBack())}
-				viewBox="0 0 10 10" fill="none"
+		<div style={{ display: 'flex', gap: '4px', alignItems: 'center', pointerEvents: 'auto' }}>
+			{/* Back Button */}
+			<div
+				className={`control-chip ${!backStack.length ? 'disabled' : ''}`}
+				onClick={() => { if (backStack.length) dispatch(historyStepBack()); }}
 			>
-				<path d="M5 1L1 5L5 9" stroke={'black'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-			</svg>
-			<svg width={20} height={20} style={{ visibility: !forwardStack.length ? 'hidden' : 'visible', cursor: 'pointer' }}
-				viewBox="0 0 10 10" fill="none"
-				onClick={() => dispatch(historyStepForward())}
-			>
-				<path d="M5 1L9 5L5 9" stroke={'black'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-			</svg>
-			<div style={{ marginLeft: '5px', visibility: !forwardStack.length && !backStack.length ? 'hidden' : 'visible' }}>
-				<TooltipMarkerComponent page='home' helpTextId={'help.home.history'} />
+				<span className="material-symbols-rounded">chevron_left</span>
 			</div>
-		</div >
+			{/* Forward Button */}
+			<div
+				className={`control-chip ${!forwardStack.length ? 'disabled' : ''}`}
+				onClick={() => { if (forwardStack.length) dispatch(historyStepForward()); }}
+			>
+				<span className="material-symbols-rounded">chevron_right</span>
+			</div>
+			{/* Help */}
+			{(backStack.length > 0 || forwardStack.length > 0) && (
+				<div className="control-chip" style={{ marginLeft: '4px' }}>
+					<TooltipMarkerComponent page='home' helpTextId={'help.home.history'} />
+				</div>
+			)}
+		</div>
 	);
 }

@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import * as React from 'react';
 import { useState } from 'react';
 import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
 import { useAppSelector } from '../redux/reduxHooks';
@@ -37,9 +36,23 @@ export default function MoreOptionsComponent() {
 	return (
 		<>
 			{
-				<div style={{ marginTop: '10px' }}>
-					<Button color='secondary' outline onClick={handleShow}>
-						{translate('more.options')}
+				<div style={{ marginTop: '0' }}>
+					<Button
+						color='secondary'
+						outline
+						onClick={handleShow}
+						style={{
+							width: '34px',
+							height: '34px',
+							padding: 0,
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center',
+							borderRadius: '8px'
+						}}
+						title={translate('more.options')}
+					>
+						<span className="material-symbols-rounded" style={{ fontSize: '20px' }}>add</span>
 					</Button>
 					<Modal isOpen={showModal} toggle={handleClose} size='md'>
 						<ModalHeader>

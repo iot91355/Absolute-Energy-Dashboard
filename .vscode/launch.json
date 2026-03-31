@@ -5,7 +5,7 @@
 			"name": "Attach to Node in Docker",
 			"type": "node",
 			"request": "attach",
-			"port": 9229,
+			"port": 9350,
 			"remoteRoot": "/usr/src/app",
 			"sourceMaps": true
 		},

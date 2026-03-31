@@ -22,10 +22,18 @@ export default function ChartDataSelectComponent() {
 	const visibleDateRange = isHalfBounded || isBounded;
 
 	return (
-		<div>
-			<MeterAndGroupSelectComponent />
-			<UnitSelectComponent />
-			{(visibleDateRange && chartToRender !== ChartTypes.threeD && chartToRender !== ChartTypes.compareLine) && <DateRangeComponent />}
+		<div style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap', alignItems: 'center' }}>
+			<div className='control-group' style={{ flex: '1 1 auto', minWidth: '150px', maxWidth: '400px' }}>
+				<MeterAndGroupSelectComponent />
+			</div>
+			<div className='control-group' style={{ flexShrink: 0 }}>
+				<UnitSelectComponent />
+			</div>
+			{(visibleDateRange && chartToRender !== ChartTypes.threeD && chartToRender !== ChartTypes.compareLine) && (
+				<div className='control-group' style={{ flexShrink: 0 }}>
+					<DateRangeComponent />
+				</div>
+			)}
 		</div>
 	);
 }

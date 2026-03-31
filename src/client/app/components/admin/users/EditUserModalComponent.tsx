@@ -117,6 +117,22 @@ export default function EditUserModalComponent(props: EditUserModalComponentProp
 		}));
 	};
 
+	const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		if (e.target.files && e.target.files[0]) {
+			const file = e.target.files[0];
+			const reader = new FileReader();
+
+			reader.onloadend = () => {
+				setUserDetails(prevDetails => ({
+					...prevDetails,
+					image: reader.result as string
+				}));
+			};
+
+			reader.readAsDataURL(file);
+		}
+	};
+
 	// Methods to reset password fields
 	const resetPasswordFields = () => {
 		setUserDetails(prevDetails => ({
@@ -187,7 +203,7 @@ export default function EditUserModalComponent(props: EditUserModalComponentProp
 		// set needed user details into a user and send to backend
 		const editedUser: User = {
 			id: userDetails.id, username: userDetails.username, role: userDetails.role,
-			password: userDetails.password, note: userDetails.note
+			password: userDetails.password, note: userDetails.note, image: userDetails.image, email: userDetails.email, mobileNo: userDetails.mobileNo
 		};
 		submitUserEdits(editedUser)
 			.unwrap()
@@ -219,6 +235,9 @@ export default function EditUserModalComponent(props: EditUserModalComponentProp
 			initialUserDetails.username !== userDetails.username
 			|| initialUserDetails.note !== userDetails.note
 			|| initialUserDetails.role !== userDetails.role
+			|| initialUserDetails.image !== userDetails.image
+			|| initialUserDetails.email !== userDetails.email
+			|| initialUserDetails.mobileNo !== userDetails.mobileNo
 			|| passwordModified;
 		// Automatically checks for unsaved changes and addresses the issue
 		// of having to manually set the setHasUnsavedChanges
@@ -358,7 +377,7 @@ export default function EditUserModalComponent(props: EditUserModalComponentProp
 								</FormGroup>
 							</Col>
 						</Row>
-						<Row>
+						<Row xs='1' lg='2'>
 							<Col>
 								<FormGroup>
 									<Label for='note'>
@@ -374,6 +393,29 @@ export default function EditUserModalComponent(props: EditUserModalComponentProp
 									<FormFeedback>
 										{translate('error.required')}
 									</FormFeedback>
+								</FormGroup>
+							</Col>
+							<Col>
+								<FormGroup>
+									<Label for='image'>
+										{translate('user.image')}
+									</Label>
+									<Input
+										id='image'
+										name='image'
+										type='file'
+										accept='image/*'
+										onChange={handleImageChange}
+									/>
+									{userDetails.image && (
+										<div className="mt-2">
+											<img
+												src={userDetails.image}
+												alt="User Preview"
+												style={{ maxHeight: '100px', maxWidth: '100%' }}
+											/>
+										</div>
+									)}
 								</FormGroup>
 							</Col>
 						</Row>

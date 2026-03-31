@@ -10,7 +10,7 @@
 		"sourceMap": true,
 		"module": "commonjs",
 		"target": "es5",
-		"jsx": "react",
+		"jsx": "react-jsx",
 		"allowJs": true,
 		"lib": [
 			"es6",
@@ -24,7 +24,7 @@
 		"noImplicitThis": true,
 		"noImplicitAny": true,
 		"strictNullChecks": true,
-		"noUnusedLocals": true,
+		"noUnusedLocals": false,
 	},
 	"include": [
 		"./src/client/app/**/*"

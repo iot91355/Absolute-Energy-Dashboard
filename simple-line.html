@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simple Line Chart</title>
+  <script src="https://cdn.plot.ly/plotly-2.29.1.min.js"></script>
+  <style>
+    html,body { height:100%; margin:0; }
+    #chart { width:100%; height:100vh; }
+  </style>
+</head>
+<body>
+  <div id="chart"></div>
+  <script>
+    const data = [{
+      x: ['2026-01-01', '2026-01-02'],
+      y: [10, 10],
+      type: 'scatter',
+      mode: 'lines+markers',
+      line: { shape: 'linear' }
+    }];
+
+    const layout = {
+      margin: { t: 10, b: 30, l: 40, r: 10 },
+      showlegend: false,
+      autosize: true
+    };
+
+    Plotly.newPlot('chart', data, layout, { responsive: true, displayModeBar: false });
+  </script>
+</body>
+</html>

@@ -11,7 +11,7 @@ import { TimeInterval } from '../../../common/TimeInterval';
 import { useAppDispatch, useAppSelector } from '../redux/reduxHooks';
 import { selectSelectedLanguage } from '../redux/slices/appStateSlice';
 import { changeSliderRange, selectPlotlySliderMax, selectPlotlySliderMin } from '../redux/slices/graphSlice';
-import { fullSizeContainer } from '../styles/modalStyle';
+
 
 export interface OEDPlotProps {
 	data: Partial<Plotly.PlotData>[];
@@ -34,7 +34,7 @@ export const PlotOED = (props: OEDPlotProps) => {
 	const figure = React.useRef<Partial<PlotParams>>(props);
 
 	// Debounce to limit dispatch and keep reasonable history
-	const debouncedRelayout = debounce(
+	const debouncedRelayout = React.useMemo(() => debounce(
 		(e: PlotRelayoutEvent) => {
 			// This event emits an object that contains values indicating changes in the user's graph, such as zooming.
 			if (e['xaxis.range[0]'] && e['xaxis.range[1]']) {
@@ -53,7 +53,7 @@ export const PlotOED = (props: OEDPlotProps) => {
 				dispatch(changeSliderRange(new TimeInterval(startTS, endTS)));
 
 			}
-		}, 500, { leading: false, trailing: true });
+		}, 500, { leading: false, trailing: true }), [dispatch]);
 
 	// Save plotly state as ref. Not using state which would cause excessive re-renders
 	const trackPlotly = (e: Figure) => {
@@ -83,7 +83,7 @@ export const PlotOED = (props: OEDPlotProps) => {
 	const end = rangeSliderMax ?? maxRange;
 
 	return (
-		<Plot style={fullSizeContainer}
+		<Plot style={{ width: '100%', height: '100%' }}
 			data={props.data}
 			onRelayout={debouncedRelayout}
 			onUpdate={trackPlotly}

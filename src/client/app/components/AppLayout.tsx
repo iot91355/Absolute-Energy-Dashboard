@@ -5,9 +5,11 @@
 import * as React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Slide, ToastContainer } from 'react-toastify';
+import { useAppSelector } from '../redux/reduxHooks';
 import 'react-toastify/dist/ReactToastify.css';
-import FooterComponent from './FooterComponent';
-import HeaderComponent from './HeaderComponent';
+// import FooterComponent from './FooterComponent';
+// import HeaderComponent from './HeaderComponent';
+import Sidebar from './sidebar';
 
 interface LayoutProps {
 	children?: React.ReactNode | undefined
@@ -17,27 +19,57 @@ interface LayoutProps {
  * @returns The OED Application Layout. The current route as the outlet Wrapped in the header, and footer components
  */
 export default function AppLayout(props: LayoutProps) {
+	// const location = useLocation();
+	// const isDashboard = location.pathname === '/';
+	const theme = useAppSelector(state => state.appState.theme);
+	const collapsed = useAppSelector(state => state.appState.sidebarCollapsed);
+
+	React.useEffect(() => {
+		if (theme === 'dark') {
+			document.body.classList.add('dark-mode');
+		} else {
+			document.body.classList.remove('dark-mode');
+		}
+	}, [theme]);
+
+	const sidebarWidth = collapsed ? '70px' : '200px';
+	const contentMargin = collapsed ? '82px' : '220px'; // sidebar width + gaps
+
 	return (
 		<>
 			<ToastContainer transition={Slide} />
-			<div style={{
-				height: '100%',
-				display: 'flex',
-				flexDirection: 'column',
-				justifyContent: 'space-between',
-				flexWrap: 'nowrap',
-				margin: '0',
-				padding: '0'
-			}}>
-				<HeaderComponent />
-				{
-					// For the vast majority of cases we utilize react-router's outlet here.
-					// However we can use app layout with children.
-					// Refer to ErrorComponent.tsx for children usage.
-					// Refer to RouteComponent for outlet usage
-					props.children ?? <Outlet />
-				}
-				<FooterComponent />
+			<div style={{ display: 'flex', width: '100%', height: 'calc(100vh - 10px)', padding: '16px' }}>
+				{/* Main Navigation Sidebar */}
+				<div style={{ flexShrink: 0 }}>
+					<Sidebar />
+				</div>
+
+				{/* Main Content Area */}
+				<div style={{ 
+					flexGrow: 1, 
+					display: 'flex', 
+					flexDirection: 'column', 
+					marginLeft: contentMargin, 
+					width: `calc(100% - ${collapsed ? '110px' : '260px'})`,
+					transition: 'all 0.3s ease'
+				}}>
+					<div style={{
+						display: 'flex',
+						flexDirection: 'column',
+						flexGrow: 1,
+						overflowY: 'auto',
+						overflowX: 'hidden',
+						height: '100%'
+					}}>
+						{
+							// For the vast majority of cases we utilize react-router's outlet here.
+							// However we can use app layout with children.
+							// Refer to ErrorComponent.tsx for children usage.
+							// Refer to RouteComponent for outlet usage
+							props.children ?? <Outlet />
+						}
+					</div>
+				</div>
 			</div>
 		</>
 	);

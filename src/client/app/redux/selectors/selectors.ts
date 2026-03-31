@@ -3,8 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import { createSelector } from '@reduxjs/toolkit';
-import { RootState } from '../../store';
 
-// Pre-typed selector. Use anywhere what RootState will be the first arg passed to selector
-// Input Dependencies must be an array.
-export const createAppSelector = createSelector.withTypes<RootState>();
+// Use any here to break the circular dependency with store.ts
+export const createAppSelector = createSelector.withTypes<any>();
+

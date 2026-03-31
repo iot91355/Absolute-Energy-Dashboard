@@ -11,20 +11,29 @@ import { selectAnythingFetching } from '../redux/selectors/apiSelectors';
 import {
 	changeSliderRange, selectChartToRender, selectHistoryIsDirty,
 	selectSelectedGroups, selectSelectedMeters,
-	selectSliderRangeInterval, selectInitialXAxisRange,
-	selectQueryTimeInterval, updateTimeIntervalAndSliderRange
+	selectSliderRangeInterval, updateTimeIntervalAndSliderRange
 } from '../redux/slices/graphSlice';
+import { selectTheme } from '../redux/slices/appStateSlice';
 import HistoryComponent from './HistoryComponent';
 import { ChartTypes } from '../types/redux/graph';
+import { readingsApi } from '../redux/api/readingsApi';
 
 /**
  * @returns Renders a history component with previous and next buttons.
  */
 export default function PlotNavComponent() {
 	return (
-		<div style={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-			<HistoryComponent />
-			<RefreshGraphComponent />
+		<div style={{
+			width: 'auto',
+			display: 'flex',
+			flexDirection: 'row',
+			justifyContent: 'flex-start',
+			pointerEvents: 'none'
+		}}>
+			<div style={{ pointerEvents: 'auto', display: 'flex', gap: '4px', alignItems: 'center' }}>
+				<HistoryComponent />
+				<RefreshGraphComponent />
+			</div>
 		</div >
 	);
 }
@@ -32,18 +41,31 @@ export const TrashCanHistoryComponent = () => {
 	const dispatch = useAppDispatch();
 	const isDirty = useAppSelector(selectHistoryIsDirty);
 	return (
-		< img src={isDirty ? './full_trashcan.png' : './empty_trashcan.png'} style={{ height: '25px', visibility: isDirty ? 'visible' : 'hidden' }}
-			onClick={() => { dispatch(clearGraphHistory()); }}
-		/>
+		<span
+			className={`material-symbols-rounded control-chip ${!isDirty ? 'disabled' : ''}`}
+			style={{
+				fontSize: '20px',
+				visibility: isDirty ? 'visible' : 'hidden',
+			}}
+			onClick={() => { if (isDirty) dispatch(clearGraphHistory()); }}
+		>
+			{isDirty ? 'delete_forever' : 'delete'}
+		</span>
 	);
 };
 
 export const ExpandComponent = () => {
 	const dispatch = useAppDispatch();
 	return (
-		<img src='./expand.png' style={{ height: '25px' }}
+		<span
+			className="material-symbols-rounded control-chip"
+			style={{
+				fontSize: '24px',
+			}}
 			onClick={() => { dispatch(changeSliderRange(TimeInterval.unbounded())); }}
-		/>
+		>
+			fullscreen
+		</span>
 	);
 };
 
@@ -51,8 +73,6 @@ export const RefreshGraphComponent = () => {
 	const [time, setTime] = React.useState(0);
 	const dispatch = useAppDispatch();
 	const sliderInterval = useAppSelector(selectSliderRangeInterval);
-	const queryTimeInterval = useAppSelector(selectQueryTimeInterval);
-	const initialXAxisRange = useAppSelector(selectInitialXAxisRange);
 	const somethingFetching = useAppSelector(selectAnythingFetching);
 	const selectedMeters = useAppSelector(selectSelectedMeters);
 	const selectedGroups = useAppSelector(selectSelectedGroups);
@@ -70,48 +90,64 @@ export const RefreshGraphComponent = () => {
 		}
 		return () => clearInterval(interval);
 	}, [somethingFetching]);
-	/**
-	 * Computes the next query TimeInterval based on the current slider position and previous query interval.
-	 * - If the previous query interval was unbounded on a side and the slider is at or beyond the min/max x-axis,
-	 *   that side remains unbounded.
-	 * - Otherwise, the slider's value is used for the new interval.
-	 * @param prevQuery - The previous query interval (may be bounded or unbounded).
-	 * @param slider - The current slider interval selected by the user.
-	 * @param xAxisMin - The minimum x value of the data (left bound).
-	 * @param xAxisMax - The maximum x value of the data (right bound).
-	 * @returns  The new query interval to use for the next data fetch.
-	 */
-	function getNextQueryTimeInterval(
-		prevQuery: TimeInterval,
-		slider: TimeInterval,
-		xAxisMin: moment.Moment | undefined,
-		xAxisMax: moment.Moment | undefined
-	): TimeInterval {
-		let start: moment.Moment | undefined = slider.getStartTimestamp();
-		let end: moment.Moment | undefined = slider.getEndTimestamp();
+	// Auto-refresh hook
+	React.useEffect(() => {
+		if (!iconVisible) return;
 
-		// If previous query was unbounded on the left and slider is at or before min, keep left unbounded
-		if (!prevQuery.getStartTimestamp() && start && xAxisMin && (start.isSameOrBefore(xAxisMin))) {
-			start = undefined;
-		}
-		// If previous query was unbounded on the right and slider is at or after max, keep right unbounded
-		if (!prevQuery.getEndTimestamp() && end && xAxisMax && (end.isSameOrAfter(xAxisMax))) {
-			end = undefined;
-		}
-		return new TimeInterval(start, end);
-	}
+		const refreshInterval = setInterval(() => {
+			if (!somethingFetching) {
+				const now = moment();
+				const currentEnd = sliderInterval.getEndTimestamp();
+
+				// Only roll the window if we have a bounded interval and we are currently looking at "Recent" data (within 5 mins of now)
+				// This prevents the graph from jumping if the user is looking at historical data.
+				if (currentEnd && Math.abs(now.diff(currentEnd)) < 5 * 60 * 1000) {
+					if (sliderInterval.getIsBounded()) {
+						const start = sliderInterval.getStartTimestamp()!;
+						const duration = currentEnd.diff(start);
+
+						// Create new Rolling Window ending at "Now"
+						const nextEnd = now;
+						const nextStart = now.clone().subtract(duration, 'ms');
+
+						dispatch(updateTimeIntervalAndSliderRange(new TimeInterval(nextStart, nextEnd)));
+					}
+				} else {
+					// Fallback for when we aren't rolling (just ensuring latest data if unbounded or manually refreshed)
+					dispatch(readingsApi.util.invalidateTags(['Readings']));
+				}
+			}
+		}, 10000); // 10 seconds
+
+		return () => clearInterval(refreshInterval);
+	}, [iconVisible, somethingFetching, sliderInterval, dispatch]);
+
+	const theme = useAppSelector(selectTheme);
+	const accentColor = theme === 'dark' ? '#00f2ea' : '#5E5CE6';
+
 	return (
-		<img
-			src='./refresh.png'
-			style={{ height: '25px', transform: `rotate(${time}deg)`, visibility: iconVisible ? 'visible' : 'hidden' }}
+		<div
+			className="control-chip"
+			style={{ visibility: iconVisible ? 'visible' : 'hidden', display: 'flex', gap: '8px', alignItems: 'center', width: 'auto', padding: '0 8px' }}
 			onClick={() => {
 				if (!somethingFetching) {
-					const minX = initialXAxisRange?.getStartTimestamp?.();
-					const maxX = initialXAxisRange?.getEndTimestamp?.();
-					const nextInterval = getNextQueryTimeInterval(queryTimeInterval, sliderInterval, minX, maxX);
-					dispatch(updateTimeIntervalAndSliderRange(nextInterval));
+					dispatch(readingsApi.util.invalidateTags(['Readings']));
 				}
 			}}
-		/>
+		>
+			<span style={{ fontSize: '11px', fontWeight: 600, color: somethingFetching ? accentColor : 'inherit' }}>
+				{somethingFetching ? 'REFRESHING...' : 'LIVE'}
+			</span>
+			<span
+				className="material-symbols-rounded"
+				style={{
+					color: somethingFetching ? accentColor : 'inherit',
+					transform: `rotate(${time}deg)`,
+					transition: 'transform 0.1s linear'
+				}}
+			>
+				refresh
+			</span>
+		</div>
 	);
 };

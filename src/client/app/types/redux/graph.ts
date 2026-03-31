@@ -87,4 +87,7 @@ export interface GraphState {
 	hotlinked: boolean;
 	shiftAmount: ShiftAmount;
 	shiftTimeInterval: TimeInterval;
+	yMin?: number;
+	yMax?: number;
+	chartRotation?: number;
 }

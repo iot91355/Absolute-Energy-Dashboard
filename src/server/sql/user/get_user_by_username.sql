@@ -5,4 +5,4 @@
 /* This exposes the encrypted password so should only be used on
    server code and never returned to the client */
 
-SELECT id, username, password_hash, role, note FROM users WHERE username=${username};
+SELECT id, username, password_hash, role, note, image, mobile_no, email FROM users WHERE username=${username};

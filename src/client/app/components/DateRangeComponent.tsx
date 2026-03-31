@@ -9,7 +9,7 @@ import * as React from 'react';
 import 'react-calendar/dist/Calendar.css';
 import { useAppDispatch, useAppSelector } from '../redux/reduxHooks';
 import { selectSelectedLanguage } from '../redux/slices/appStateSlice';
-import { changeSliderRange, selectQueryTimeInterval, updateTimeInterval, selectChartToRender} from '../redux/slices/graphSlice';
+import { changeSliderRange, selectQueryTimeInterval, updateTimeInterval, selectChartToRender } from '../redux/slices/graphSlice';
 import '../styles/DateRangeCustom.css';
 import { Dispatch } from '../types/redux/actions';
 import { dateRangeToTimeInterval, timeIntervalToDateRange } from '../utils/dateRangeCompatibility';
@@ -28,7 +28,7 @@ export default function DateRangeComponent() {
 	const queryTimeInterval = useAppSelector(selectQueryTimeInterval);
 	const locale = useAppSelector(selectSelectedLanguage);
 	const chartType = useAppSelector(selectChartToRender);
-	const datePickerVisible =  chartType !== ChartTypes.compare;
+	const datePickerVisible = chartType !== ChartTypes.compare;
 
 	const handleChange = (value: Value) => {
 		dispatch(updateTimeInterval(dateRangeToTimeInterval(value)));
@@ -37,14 +37,14 @@ export default function DateRangeComponent() {
 
 
 	return (
-		<div style={{ width: '100%' }}>
+		<>
 			{datePickerVisible && (
 				<>
-					<p style={labelStyle}>
+					<div className="control-label">
 						{translate('date.range')}:
 						<TooltipMarkerComponent page='home' helpTextId='help.home.select.dateRange' />
-					</p>
-					<div style = {bottomSpace}>
+					</div>
+					<div>
 						<DateRangePicker
 							value={timeIntervalToDateRange(queryTimeInterval)}
 							onChange={handleChange}
@@ -53,10 +53,11 @@ export default function DateRangeComponent() {
 							maxDate={new Date()}
 							locale={locale} // Formats Dates, and Calendar months base on locale
 							calendarIcon={null}
+							clearIcon={<span className="material-symbols-rounded" style={{ fontSize: '16px' }}>close</span>}
 						/>
 					</div>
 				</>
 			)}
-		</div>
+		</>
 	);
 }

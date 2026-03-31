@@ -30,7 +30,7 @@ import Plot from 'react-plotly.js';
 import { Icons } from 'plotly.js';
 import { selectSelectedLanguage } from '../redux/slices/appStateSlice';
 import Locales from '../types/locales';
-import { fullSizeContainer } from '../styles/modalStyle';
+
 
 /**
  * Component used to render 3D graphics
@@ -57,7 +57,7 @@ export default function ThreeDComponent() {
 		'resetScale2d'];
 	const advancedButtons: Plotly.ModeBarDefaultButtons[] = ['resetCameraDefault3d'];
 	// Manage button states with useState
-	const	[listOfButtons, setListOfButtons] = React.useState(defaultButtons);
+	const [listOfButtons, setListOfButtons] = React.useState(defaultButtons);
 
 	if (!meterOrGroupID) {
 		// No selected Meters
@@ -86,22 +86,46 @@ export default function ThreeDComponent() {
 			{isFetching
 				? <SpinnerComponent loading width={50} height={50} />
 				: <Plot
-					style={fullSizeContainer}
+					style={{ width: '100%', height: '100%' }}
 					data={dataToRender as Plotly.PlotData[]}
 					layout={layout as Plotly.Layout}
 					config={{
 						responsive: true,
 						displayModeBar: true,
 						modeBarButtonsToRemove: listOfButtons,
-						modeBarButtonsToAdd: [{
-							name: 'more-options',
-							title: translate('toggle.options'),
-							icon: Icons.pencil,
-							click: function () {
-								// # of items must differ so the length can tell which list of buttons is being set
-								setListOfButtons(listOfButtons.length === defaultButtons.length ? advancedButtons : defaultButtons); // Update the state
-							}
-						}],
+						modeBarButtonsToAdd: [
+							{
+								name: 'fullscreen',
+								title: translate('fullscreen') || 'Toggle Full Screen',
+								icon: {
+									width: 24,
+									height: 24,
+									path: 'M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z'
+								},
+								click: function (gd: any) {
+									const elt = gd.parentElement; // Get Plotly container
+									if (!document.fullscreenElement) {
+										if (elt?.requestFullscreen) {
+											elt.requestFullscreen().catch((err: Error) => {
+												alert(`Error attempting to enable fullscreen mode: ${err.message}`);
+											});
+										}
+									} else {
+										if (document.exitFullscreen) {
+											document.exitFullscreen();
+										}
+									}
+								}
+							},
+							{
+								name: 'more-options',
+								title: translate('toggle.options'),
+								icon: Icons.pencil,
+								click: function () {
+									// # of items must differ so the length can tell which list of buttons is being set
+									setListOfButtons(listOfButtons.length === defaultButtons.length ? advancedButtons : defaultButtons); // Update the state
+								}
+							}],
 						// Current Locale
 						locale,
 						// Available Locales

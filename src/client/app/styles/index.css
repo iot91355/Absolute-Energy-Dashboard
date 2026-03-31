@@ -17,8 +17,11 @@ body {
 }
 
 .no_scrollbar {
-	scrollbar-width: none; /* Firefox 64+ */
-	-ms-overflow-style: none; /* Internet Explorer and Edge */
+	scrollbar-width: none;
+	/* Firefox 64+ */
+	-ms-overflow-style: none;
+
+	/* Internet Explorer and Edge */
 	/* Hide scrollbar for Webkit browsers */
 	::-webkit-scrollbar {
 		display: none;
@@ -38,4 +41,53 @@ div.plotly-notifier {
 
 .flexGrowOne {
 	flex-grow: 1;
+}
+
+/* Global Primary Color Overrides */
+:root {
+	--bs-primary: #3B5BFE;
+	--bs-primary-rgb: 59, 91, 254;
+}
+
+.btn-primary {
+	background-color: #3B5BFE !important;
+	border-color: #3B5BFE !important;
+}
+
+.btn-primary:hover {
+	background-color: #2f49cb !important;
+	border-color: #2f49cb !important;
+}
+
+.text-primary {
+	color: #3B5BFE !important;
+}
+
+.bg-primary {
+	background-color: #3B5BFE !important;
+}
+
+a {
+	color: #3B5BFE;
+	text-decoration: none;
+}
+
+a:hover {
+	color: #2f49cb;
+}
+
+.page-item.active .page-link {
+	background-color: #3B5BFE !important;
+	border-color: #3B5BFE !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+	border-color: #8b9efe;
+	box-shadow: 0 0 0 0.25rem rgba(59, 91, 254, 0.25);
+}
+
+.form-check-input:checked {
+	background-color: #3B5BFE;
+	border-color: #3B5BFE;
 }

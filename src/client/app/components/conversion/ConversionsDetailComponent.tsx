@@ -57,7 +57,7 @@ export default function ConversionsDetailComponent() {
 								<TooltipMarkerComponent page='conversions' helpTextId={tooltipStyle.tooltipConversionView} />
 							</div>
 						</h2>
-						<div className="edit-btn">
+						<div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
 							<CreateConversionModalComponent />
 						</div>
 						<div className="card-container">
@@ -66,8 +66,8 @@ export default function ConversionsDetailComponent() {
 							{
 								Object.values(conversionsState)
 									.sort((conversionA: ConversionData, conversionB: ConversionData) =>
-										((unitDataById[conversionA.sourceId]?.identifier + unitDataById[conversionA.destinationId]?.identifier).toLowerCase().localeCompare((
-											unitDataById[conversionB.sourceId]?.identifier + unitDataById[conversionB.destinationId]?.identifier).toLowerCase(), locale,
+									((unitDataById[conversionA.sourceId]?.identifier + unitDataById[conversionA.destinationId]?.identifier).toLowerCase().localeCompare((
+										unitDataById[conversionB.sourceId]?.identifier + unitDataById[conversionB.destinationId]?.identifier).toLowerCase(), locale,
 										{ sensitivity: 'accent' })))
 									.map(conversionData => (
 										<ConversionViewComponent

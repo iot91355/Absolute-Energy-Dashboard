@@ -4,7 +4,7 @@
 
 import * as React from 'react';
 import Select, {
-	ActionMeta, MultiValue,
+	ActionMeta, MultiValue, SingleValue,
 	MultiValueGenericProps, MultiValueProps,
 	StylesConfig, components
 } from 'react-select';
@@ -22,10 +22,19 @@ import { ChartTypes, MeterOrGroup } from '../types/redux/graph';
 import { useTranslate } from '../redux/componentHooks';
 import TooltipMarkerComponent from './TooltipMarkerComponent';
 import { selectAnythingFetching } from '../redux/selectors/apiSelectors';
-import { labelStyle } from '../styles/modalStyle';
+import { selectAllMeters } from '../redux/api/metersApi';
+
+
+import { getDeviceFromIdentifier } from '../utils/meterUtils';
+
+interface DeviceOption {
+	label: string;
+	value: string;
+}
 
 /**
  * Creates a React-Select component for the UI Options Panel.
+ * Now includes a Device dropdown that filters telemetry (meters) by device.
  * @returns A React-Select component.
  */
 export default function MeterAndGroupSelectComponent() {
@@ -34,40 +43,81 @@ export default function MeterAndGroupSelectComponent() {
 	const { meterGroupedOptions, groupsGroupedOptions, allSelectedMeterValues, allSelectedGroupValues } = useAppSelector(selectMeterGroupSelectData);
 	const selectedUnit = useAppSelector(selectSelectedUnit);
 	const somethingIsFetching = useAppSelector(selectAnythingFetching);
+	const allMeters = useAppSelector(selectAllMeters);
+
+	// Track selected device(s)
+	const [selectedDevices, setSelectedDevices] = React.useState<string[]>([]);
+
+	// Build device options from all meter identifiers
+	const deviceOptions = React.useMemo<DeviceOption[]>(() => {
+		const deviceSet = new Set<string>();
+		allMeters.forEach(meter => {
+			const device = getDeviceFromIdentifier(meter.identifier);
+			deviceSet.add(device);
+		});
+		return Array.from(deviceSet)
+			.sort((a, b) => a.localeCompare(b))
+			.map(device => ({ label: device, value: device }));
+	}, [allMeters]);
+
+	// Filter meter options based on selected device(s)
+	const filterOptionsByDevice = React.useCallback((options: SelectOption[]): SelectOption[] => {
+		if (selectedDevices.length === 0) return options;
+		return options.filter(option => {
+			// Find the meter data to get the identifier
+			const meter = allMeters.find(m => m.id === option.value);
+			if (!meter) return true; // Keep if we can't find the meter (e.g., it's a group)
+			const device = getDeviceFromIdentifier(meter.identifier);
+			return selectedDevices.includes(device);
+		});
+	}, [selectedDevices, allMeters]);
 
 	// Merge meterGroupedOptions and groupsGroupedOptions into a single list with two categories
-	const combinedOptions = [
-		{
-			label: 'Options', // Category name
-			options: [
-				// Compatible meters with "ᵐ" added to the label
-				...meterGroupedOptions.find(group => group.label === 'Meters')?.options.map(option => ({
-					...option,
-					label: `${option.label}ᴹ`
-				})) || [],
-				// Compatible groups with "ᶢ" added to the label
-				...groupsGroupedOptions.find(group => group.label === 'Options')?.options.map(option => ({
-					...option,
-					label: `${option.label}ᴳ`
-				})) || []
-			].sort((a, b) => a.label.localeCompare(b.label)) //Sort alphabetically by label
-		},
-		{
-			label: 'Incompatible Options',
-			options: [
-				// Incompatible meters with "ᵐ" added to the label
-				...meterGroupedOptions.find(group => group.label === 'Incompatible Meters')?.options.map(option => ({
-					...option,
-					label: `${option.label}ᴹ`
-				})) || [],
-				// Incompatible groups with "ᶢ" added to the label
-				...groupsGroupedOptions.find(group => group.label === 'Incompatible Options')?.options.map(option => ({
-					...option,
-					label: `${option.label}ᴳ`
-				})) || []
-			].sort((a, b) => a.label.localeCompare(b.label))
-		}
-	];
+	// Apply device filter to meter options
+	const combinedOptions = React.useMemo(() => {
+		const compatibleMeters = meterGroupedOptions.find(group => group.label === 'Meters')?.options || [];
+		const incompatibleMeters = meterGroupedOptions.find(group => group.label === 'Incompatible Meters')?.options || [];
+		const compatibleGroups = groupsGroupedOptions.find(group => group.label === 'Options')?.options || [];
+		const incompatibleGroups = groupsGroupedOptions.find(group => group.label === 'Incompatible Options')?.options || [];
+
+		// Filter meters by selected device
+		const filteredCompatibleMeters = filterOptionsByDevice(compatibleMeters);
+		const filteredIncompatibleMeters = filterOptionsByDevice(incompatibleMeters);
+
+		return [
+			{
+				label: 'Options', // Category name
+				options: [
+					// Compatible meters with "ᵐ" added to the label
+					...filteredCompatibleMeters.map(option => ({
+						...option,
+						label: `${option.label}ᴹ`
+					})),
+					// Compatible groups with "ᶢ" added to the label
+					...compatibleGroups.map(option => ({
+						...option,
+						label: `${option.label}ᴳ`
+					}))
+				].sort((a, b) => a.label.localeCompare(b.label)) //Sort alphabetically by label
+			},
+			{
+				label: 'Incompatible Options',
+				options: [
+					// Incompatible meters with "ᵐ" added to the label
+					...filteredIncompatibleMeters.map(option => ({
+						...option,
+						label: `${option.label}ᴹ`
+					})),
+					// Incompatible groups with "ᶢ" added to the label
+					...incompatibleGroups.map(option => ({
+						...option,
+						label: `${option.label}ᴳ`
+					}))
+				].sort((a, b) => a.label.localeCompare(b.label))
+			}
+		];
+	}, [meterGroupedOptions, groupsGroupedOptions, filterOptionsByDevice]);
+
 	//Combine the selected values into one array with a type property to differentiate between meters and groups
 	const combinedValue = [
 		...allSelectedMeterValues.map(value => ({ ...value, meterOrGroup: MeterOrGroup.meters })),
@@ -91,39 +141,64 @@ export default function MeterAndGroupSelectComponent() {
 
 	};
 
+	const onDeviceChange = (newValue: MultiValue<DeviceOption>) => {
+		setSelectedDevices(newValue ? newValue.map(v => v.value) : []);
+	};
+
 	return (
 		<>
-			<p style={labelStyle}>
-				{translate('data.sources')}:
-				<TooltipMarkerComponent page='home' helpTextId={'help.home.select.datasources'} />
-			</p>
-			<Select<SelectOption, true, GroupedOption>
-				isMulti
-				placeholder={translate('select.meter.group')}
-				options={combinedOptions}
-				value={combinedValue}
-				onChange={onChange}
-				closeMenuOnSelect={false}
-				// Customize Labeling for Grouped Labels
-				formatGroupLabel={formatGroupLabel}
-				// Included React-Select Animations
-				components={animatedComponents}
-				styles={customStyles}
-				isLoading={somethingIsFetching}
-			/>
+			<>
+				<div className="control-label" style={{ marginRight: '8px', whiteSpace: 'nowrap' }}>
+					{translate('data.sources')}:
+					<TooltipMarkerComponent page='home' helpTextId={'help.home.select.datasources'} />
+				</div>
+				<div style={{ flexGrow: 1, minWidth: '250px' }}>
+					{/* Device Selection Dropdown */}
+					<Select<DeviceOption, true>
+						isMulti
+						placeholder="Select Device(s)..."
+						options={deviceOptions}
+						value={deviceOptions.filter(opt => selectedDevices.includes(opt.value))}
+						onChange={onDeviceChange}
+						closeMenuOnSelect={false}
+						styles={deviceSelectStyles}
+						classNamePrefix="react-select"
+						menuPortalTarget={document.body}
+						menuPosition="fixed"
+						isClearable
+						noOptionsMessage={() => 'No devices found'}
+					/>
+					{/* Telemetry Selection Dropdown */}
+					<Select<SelectOption, true, GroupedOption>
+						isMulti
+						placeholder={
+							selectedDevices.length === 0
+								? translate('select.meter.group')
+								: `Select telemetry for ${selectedDevices.join(', ')}...`
+						}
+						options={combinedOptions}
+						value={combinedValue}
+						onChange={onChange}
+						closeMenuOnSelect={false}
+						// Customize Labeling for Grouped Labels
+						formatGroupLabel={formatGroupLabel}
+						// Included React-Select Animations
+						components={animatedComponents}
+						styles={customStyles}
+						isLoading={somethingIsFetching}
+						classNamePrefix="react-select"
+						menuPortalTarget={document.body}
+						menuPosition="fixed"
+					/>
+				</div>
+			</>
 		</>
 	);
 }
 
-const groupStyles: React.CSSProperties = {
-	display: 'flex',
-	alignItems: 'center',
-	justifyContent: 'space-between'
-};
-
 const formatGroupLabel = (data: GroupedOption) => {
 	return (
-		< div style={groupStyles} >
+		< div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} >
 			<span>{data.label}</span>
 			<Badge pill color="primary">{data.options.length}</Badge>
 		</div >
@@ -199,10 +274,145 @@ const animatedComponents = makeAnimated({
 	MultiValueLabel
 });
 
+const deviceSelectStyles: StylesConfig<DeviceOption, true> = {
+	control: (base) => ({
+		...base,
+		fontSize: '12px',
+		fontWeight: 500,
+		minHeight: '30px',
+		height: 'auto',
+		maxHeight: '50px',
+		marginBottom: '4px',
+		borderColor: '#6366f1',
+		boxShadow: 'none',
+		'&:hover': {
+			borderColor: '#818cf8'
+		}
+	}),
+	placeholder: (base) => ({
+		...base,
+		fontSize: '12px',
+		fontWeight: 500,
+		color: '#94a3b8'
+	}),
+	input: (base) => ({
+		...base,
+		fontSize: '12px',
+		fontWeight: 500,
+		margin: 0,
+		padding: 0
+	}),
+	option: (base, state) => ({
+		...base,
+		fontSize: '12px',
+		fontWeight: 500,
+		backgroundColor: state.isSelected ? '#6366f1' : state.isFocused ? '#eef2ff' : undefined,
+		color: state.isSelected ? '#fff' : '#1e293b',
+		'&:active': {
+			backgroundColor: '#818cf8'
+		}
+	}),
+	multiValue: (base) => ({
+		...base,
+		backgroundColor: '#eef2ff',
+		borderRadius: '4px',
+		margin: '1px 2px'
+	}),
+	multiValueLabel: (base) => ({
+		...base,
+		fontSize: '11px',
+		fontWeight: 600,
+		color: '#4f46e5',
+		padding: '1px 4px'
+	}),
+	multiValueRemove: (base) => ({
+		...base,
+		color: '#6366f1',
+		'&:hover': {
+			backgroundColor: '#c7d2fe',
+			color: '#4338ca'
+		}
+	}),
+	valueContainer: (base) => ({
+		...base,
+		maxHeight: '44px',
+		overflowY: 'auto',
+		flexWrap: 'wrap',
+		padding: '2px 8px',
+		alignContent: 'flex-start'
+	}),
+	indicatorsContainer: (base) => ({
+		...base,
+		alignSelf: 'flex-start',
+		paddingTop: '2px'
+	}),
+	menuPortal: (base) => ({
+		...base,
+		zIndex: 9999
+	})
+};
 
 const customStyles: StylesConfig<SelectOption, true, GroupedOption> = {
+	control: (base) => ({
+		...base,
+		fontSize: '12px',
+		fontWeight: 500,
+		minHeight: '34px',
+		height: 'auto',
+		maxHeight: '60px'
+	}),
+	placeholder: (base) => ({
+		...base,
+		fontSize: '12px',
+		fontWeight: 500
+	}),
+	input: (base) => ({
+		...base,
+		fontSize: '12px',
+		fontWeight: 500,
+		margin: 0,
+		padding: 0
+	}),
+	singleValue: (base) => ({
+		...base,
+		fontSize: '12px',
+		fontWeight: 500
+	}),
+	option: (base) => ({
+		...base,
+		fontSize: '12px',
+		fontWeight: 500
+	}),
 	multiValue: (base, props) => ({
 		...base,
-		backgroundColor: props.data.isDisabled ? 'hsl(0, 0%, 70%)' : base.backgroundColor
+		backgroundColor: props.data.isDisabled ? 'hsl(0, 0%, 70%)' : base.backgroundColor,
+		margin: '2px',
+		maxWidth: '120px'
+	}),
+	multiValueLabel: (base) => ({
+		...base,
+		fontSize: '11px',
+		fontWeight: 500,
+		padding: '2px 4px',
+		overflow: 'hidden',
+		textOverflow: 'ellipsis',
+		whiteSpace: 'nowrap'
+	}),
+	valueContainer: (base) => ({
+		...base,
+		maxHeight: '54px',
+		overflowY: 'auto',
+		flexWrap: 'wrap',
+		padding: '2px 8px',
+		alignContent: 'flex-start'
+	}),
+	indicatorsContainer: (base) => ({
+		...base,
+		alignSelf: 'flex-start',
+		paddingTop: '4px'
+	}),
+	menuPortal: (base) => ({
+		...base,
+		zIndex: 9999
 	})
 };

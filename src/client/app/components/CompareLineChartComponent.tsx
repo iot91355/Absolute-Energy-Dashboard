@@ -84,8 +84,10 @@ export default function CompareLineChartComponent() {
 				})
 			});
 
-	// Check if there is at least one valid graph for current data and shifted data
-	const enoughData = data.find(data => data.x!.length > 1) && dataNew.find(dataNew => dataNew.x!.length > 1);
+	// Find at least one valid trace for current data and shifted data (accept single-point traces)
+	const foundOriginal = data.find(trace => (trace.x && (trace.x as any[]).length >= 1));
+	const foundShifted = dataNew.find(trace => (trace.x && (trace.x as any[]).length >= 1));
+	const enoughData = !!foundOriginal && !!foundShifted;
 
 	// Display Plotly Buttons Feature
 	// The number of items in defaultButtons and advancedButtons must differ as discussed below
@@ -107,8 +109,10 @@ export default function CompareLineChartComponent() {
 		layout = setHelpLayout(translate('no.data.in.range'));
 	} else {
 		if (!isFetching && !isFetchingNew) {
-			// Checks/warnings on received reading data
-			checkReceivedData(data[0].x, dataNew[0].x);
+			// Checks/warnings on received reading data (use the found traces)
+			if (foundOriginal && foundShifted) {
+				checkReceivedData(foundOriginal.x, foundShifted.x);
+			}
 		}
 		layout = {
 			autosize: true, showlegend: true,
@@ -134,12 +138,31 @@ export default function CompareLineChartComponent() {
 		};
 	}
 
-	// Adding information to the shifted data so that it can be plotted on the same graph with current data
-	const updateDataNew = dataNew.map(item => ({
+	const dashStyles = ['solid', 'dash', 'dot', 'dashdot', 'longdash', 'longdashdot'];
+
+	const processedOriginalData = data.map((item, i) => ({
+		...item,
+		line: {
+			...item.line,
+			shape: 'linear',
+			dash: dashStyles[i % dashStyles.length] as any
+		},
+		fill: 'tozeroy',
+		fillcolor: item.line?.color ? (item.line.color + '1A') : undefined
+	}));
+
+	const processedShiftedData = dataNew.map((item, i) => ({
 		...item,
 		name: 'Shifted ' + item.name,
-		line: { ...item.line, color: '#1AA5F0' },
+		line: {
+			...item.line,
+			color: '#1AA5F0',
+			shape: 'linear',
+			dash: dashStyles[(i + 1) % dashStyles.length] as any // Offset dash for shifted
+		},
 		xaxis: 'x2',
+		fill: 'tozeroy',
+		fillcolor: '#1AA5F01A',
 		text: Array.isArray(item.text)
 			? item.text.map(text => text.replace('<br>', '<br>Shifted '))
 			: item.text?.replace('<br>', '<br>Shifted ')
@@ -152,22 +175,48 @@ export default function CompareLineChartComponent() {
 				? <SpinnerComponent loading height={50} width={50} />
 				: <Plot
 					// Only plot shifted data if the shiftAmount has been chosen
-					data={shiftAmount === ShiftAmount.none ? [] : [...data, ...updateDataNew]}
-					style={{ width: '100%', height: '100%', minHeight: '750px' }}
+					data={(shiftAmount === ShiftAmount.none ? [] : [...processedOriginalData, ...processedShiftedData]) as any}
+					// Fill the parent container and respond to resizes
+					useResizeHandler={true}
+					style={{ width: '100%', height: '100%' }}
 					layout={layout}
 					config={{
 						responsive: true,
 						displayModeBar: true,
 						modeBarButtonsToRemove: listOfButtons,
-						modeBarButtonsToAdd: [{
-							name: 'toggle-options',
-							title: translate('toggle.options'),
-							icon: Icons.pencil,
-							click: function () {
-								// # of items must differ so the length can tell which list of buttons is being set
-								setListOfButtons(listOfButtons.length === defaultButtons.length ? advancedButtons : defaultButtons); // Update the state
-							}
-						}],
+						modeBarButtonsToAdd: [
+							{
+								name: 'fullscreen',
+								title: translate('fullscreen') || 'Toggle Full Screen',
+								icon: {
+									width: 24,
+									height: 24,
+									path: 'M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z'
+								},
+								click: function (gd: any) {
+									const elt = gd.parentElement; // Get Plotly container
+									if (!document.fullscreenElement) {
+										if (elt?.requestFullscreen) {
+											elt.requestFullscreen().catch((err: Error) => {
+												alert(`Error attempting to enable fullscreen mode: ${err.message}`);
+											});
+										}
+									} else {
+										if (document.exitFullscreen) {
+											document.exitFullscreen();
+										}
+									}
+								}
+							},
+							{
+								name: 'toggle-options',
+								title: translate('toggle.options'),
+								icon: Icons.pencil,
+								click: function () {
+									// # of items must differ so the length can tell which list of buttons is being set
+									setListOfButtons(listOfButtons.length === defaultButtons.length ? advancedButtons : defaultButtons); // Update the state
+								}
+							}],
 						// Current Locale
 						locale,
 						// Available Locales

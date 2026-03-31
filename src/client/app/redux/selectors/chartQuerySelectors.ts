@@ -3,7 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import { createSelector } from '@reduxjs/toolkit';
-import { RootState } from 'store';
+// RootState import removed to break circular dependency Loop
+
 import { MeterOrGroup, ReadingInterval } from '../../types/redux/graph';
 import { calculateCompareShift } from '../../utils/calculateCompare';
 import { roundTimeIntervalForFetch } from '../../utils/dateRangeCompatibility';
@@ -16,6 +17,7 @@ import {
 } from '../slices/graphSlice';
 import { omit } from 'lodash';
 import { selectLineChartDeps } from './lineChartSelectors';
+import { selectGroupDataById } from '../api/groupsApi';
 
 // query args that 'most' graphs share
 export interface commonQueryArgs {
@@ -74,11 +76,22 @@ export const selectCommonQueryArgs = createSelector(
 
 export const selectLineChartQueryArgs = createSelector(
 	selectCommonQueryArgs,
-	common => {
+	selectGroupDataById,
+	(common, groupsById) => {
 		// Use the commonQuery args to populate the args to pass into the line chart component
-		const meterArgs: LineReadingApiArgs = common.meterArgs;
+		const meterArgs: LineReadingApiArgs = { ...common.meterArgs };
 		const groupArgs: LineReadingApiArgs = common.groupArgs;
-		const meterShouldSkip = common.meterSkip;
+
+		const allMeterIds = new Set(meterArgs.ids);
+		groupArgs.ids.forEach(groupId => {
+			const group = groupsById[groupId];
+			if (group && group.deepMeters) {
+				group.deepMeters.forEach((mId: number) => allMeterIds.add(mId));
+			}
+		});
+		meterArgs.ids = Array.from(allMeterIds);
+
+		const meterShouldSkip = meterArgs.ids.length === 0;
 		const groupShouldSkip = common.groupSkip;
 		return { meterArgs, groupArgs, meterShouldSkip, groupShouldSkip };
 	}
@@ -124,15 +137,16 @@ export const selectBarChartQueryArgs = createSelector(
 	selectWidthDays,
 	(common, barWidthDays) => {
 		// QueryArguments to pass into the bar chart component
-		const barWidthAsDays = Math.round(barWidthDays.asDays());
+		// Always use 5-minute buckets for bar charts
+		const barWidthMinutes = 5;
 		// copy common args, then add bar chart args
 		const meterArgs: BarReadingApiArgs = {
 			...common.meterArgs,
-			barWidthDays: barWidthAsDays
+			barWidthDays: barWidthMinutes
 		};
 		const groupArgs: BarReadingApiArgs = {
 			...common.groupArgs,
-			barWidthDays: barWidthAsDays
+			barWidthDays: barWidthMinutes
 		};
 		const meterShouldSkip = common.meterSkip;
 		const groupShouldSkip = common.groupSkip;
@@ -170,19 +184,20 @@ export const selectCompareChartQueryArgs = createSelector(
 export const selectMapChartQueryArgs = createSelector(
 	selectBarChartQueryArgs,
 	selectWidthDays,
-	(state: RootState) => state.maps,
+	(state: any) => state.maps,
 	(barChartArgs, barWidthDays, maps) => {
 		const durationDays = Math.round(barWidthDays.asDays());
+		const durationMinutes = durationDays * 24 * 60;
 
 		const meterArgs: MapReadingApiArgs = {
 			...barChartArgs.meterArgs,
-			// Maps uses the Bar Endpoint so just use its args for simplicity, however barWidthDays should be durationDays
-			barWidthDays: durationDays
+			// Maps uses the Bar Endpoint so just use its args for simplicity. Pass total minutes over durationDays
+			barWidthDays: durationMinutes
 		};
 		const groupArgs: MapReadingApiArgs = {
 			...barChartArgs.groupArgs,
-			// Maps uses the Bar Endpoint so just use its args for simplicity, however barWidthDays should be durationDays
-			barWidthDays: durationDays
+			// Maps uses the Bar Endpoint so just use its args for simplicity. Pass total minutes over durationDays
+			barWidthDays: durationMinutes
 
 		};
 		const meterShouldSkip = barChartArgs.meterShouldSkip || maps.selectedMap === 0;

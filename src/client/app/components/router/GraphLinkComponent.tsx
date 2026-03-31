@@ -23,7 +23,7 @@ export const GraphLink = () => {
 	if (!initComplete) {
 		return <InitializingComponent />;
 	}
-	return <Navigate to='/' replace />;
+	return <Navigate to='/charts' replace />;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

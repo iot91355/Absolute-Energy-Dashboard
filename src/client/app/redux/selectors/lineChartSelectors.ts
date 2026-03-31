@@ -11,12 +11,35 @@ import { createAppSelector } from './selectors';
 import { selectScalingFromEntity, selectNameFromEntity } from './entitySelectors';
 import { selectPlotlyMeterDeps, selectPlotlyGroupDeps, selectFromLineReadingsResult } from './plotlyDataSelectors';
 
+import { selectGroupDataById } from '../../redux/api/groupsApi';
+
 type PlotlyLineDeps = ReturnType<typeof selectPlotlyMeterDeps> & { showMinMax: boolean }
 // Common deps + additional values needed to derive meter data in selectFromResult for plotly line chart
 export const selectLineChartDeps = createAppSelector(
-	[selectPlotlyMeterDeps, selectPlotlyGroupDeps, selectShowMinMax],
-	(meterDep, groupDep, showMinMax) => {
-		const meterDeps = { ...meterDep, showMinMax };
+	[selectPlotlyMeterDeps, selectPlotlyGroupDeps, selectShowMinMax, selectGroupDataById],
+	(meterDep, groupDep, showMinMax, groupDataById) => {
+		const additionalMeters = new Set<number>();
+		groupDep.compatibleEntities.forEach((groupId: number) => {
+			const group = groupDataById[groupId];
+			if (group && group.deepMeters) {
+				group.deepMeters.forEach((mId: number) => additionalMeters.add(mId));
+			}
+		});
+
+		const expandedCompatibleMetersSet = new Set<number>(meterDep.compatibleEntities);
+		additionalMeters.forEach((val: number) => expandedCompatibleMetersSet.add(val));
+		const expandedCompatibleMeters = Array.from(expandedCompatibleMetersSet);
+
+		const expandedSelectedEntitiesSet = new Set<number>(meterDep.selectedEntities);
+		additionalMeters.forEach((val: number) => expandedSelectedEntitiesSet.add(val));
+		const expandedSelectedEntities = Array.from(expandedSelectedEntitiesSet);
+
+		const meterDeps = {
+			...meterDep,
+			compatibleEntities: expandedCompatibleMeters,
+			selectedEntities: expandedSelectedEntities,
+			showMinMax
+		};
 		const groupDeps = { ...groupDep, showMinMax };
 		return { meterDeps, groupDeps };
 	}
@@ -28,11 +51,12 @@ export const selectPlotlyMeterData = selectFromLineReadingsResult(
 	[data => data, (_data, dependencies: PlotlyLineDeps) => dependencies],
 	(data, { areaUnit, areaNormalization, meterDataById, compatibleEntities, showMinMax, lineUnitLabel, rateScaling }) => {
 		const plotlyLineData = Object.entries(data)
-			// filter entries for requested compatible groups
+			// filter entries for requested compatible meters
 			// compatible entities is using the same data deriving selectors as the select option for group, & meter.
-			.filter(([groupID]) => compatibleEntities.includes((Number(groupID))))
+			.filter(([meterId]) => compatibleEntities.includes((Number(meterId))))
 			.map(([id, readings]) => {
 				const meterInfo = meterDataById[Number(id)];
+				if (!meterInfo || !Array.isArray(readings)) return null;
 
 				const scaling = selectScalingFromEntity(meterInfo, areaUnit, areaNormalization, rateScaling);
 				const label = selectNameFromEntity(meterInfo) + 'ᴹ';
@@ -72,7 +96,6 @@ export const selectPlotlyMeterData = selectFromLineReadingsResult(
 					}
 				});
 
-				// This variable contains all the elements (x and y values, line type, etc.) assigned to the data parameter of the Plotly object
 				return {
 					name: label,
 					x: xData,
@@ -94,7 +117,7 @@ export const selectPlotlyMeterData = selectFromLineReadingsResult(
 						color: getGraphColor(colorID, DataType.Meter)
 					}
 				} as Partial<Plotly.PlotData>;
-			});
+			}).filter(Boolean) as Partial<Plotly.PlotData>[];
 		return plotlyLineData;
 	}
 );
@@ -127,7 +150,6 @@ export const selectPlotlyGroupData = selectFromLineReadingsResult(
 					hoverText.push(`<b> ${timeReading.format('ddd, ll LTS')} </b> <br> ${label}: ${readingValue.toPrecision(6)} ${lineUnitLabel}`);
 				});
 
-				// This variable contains all the elements (x and y values, line type, etc.) assigned to the data parameter of the Plotly object
 				return {
 					name: label,
 					x: xData,
@@ -136,6 +158,7 @@ export const selectPlotlyGroupData = selectFromLineReadingsResult(
 					hoverinfo: 'text',
 					type: 'scatter',
 					mode: 'lines',
+					fill: 'tozeroy',
 					line: {
 						shape: 'spline',
 						width: 2,

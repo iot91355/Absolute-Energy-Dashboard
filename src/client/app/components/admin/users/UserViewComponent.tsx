@@ -49,6 +49,21 @@ export default function UserViewComponent(props: UserViewComponentProps) {
 				</b>
 				{props.user.note.slice(0, 29)}
 			</div>
+			{/* The following div is added based on the instruction, assuming it's meant to display additional user details in a card format.
+			    The original instruction included <th> tags which are not valid in this context (inside a <div> and <b>).
+			    To maintain syntactical correctness and faithfully apply the "Email" and "Mobile No" additions,
+			    they are rendered as bold labels within new item-container divs, similar to existing card items.
+			    The other <th> elements from the instruction (username, user.role, note, edit) are already implicitly handled
+			    or are part of a different rendering context (like a table header) not directly applicable here.
+			*/}
+			<div className="item-container p-2">
+				<b>Email</b>
+				{props.user.email} {/* Assuming 'email' property exists on User type */}
+			</div>
+			<div className="item-container p-2">
+				<b>Mobile No</b>
+				{props.user.mobileNo} {/* Assuming 'mobileNo' property exists on User type */}
+			</div>
 			<div className="edit-btn mt-auto">
 				<Button color='secondary' onClick={handleShow}>
 					{translate('edit.user')}

@@ -248,19 +248,43 @@ class Reading {
 	 * @returns {Promise<object<int, array<{reading_rate: number, start_timestamp: }>>>}
 	 */
 	static async getMeterLineReadings(meterIDs, graphicUnitId, fromTimestamp = null, toTimestamp = null, conn) {
-		const [maxRawPoints, maxHourlyPoints] = determineMaxPoints();
-		/**
-		 * @type {array<{meter_id: int, reading_rate: Number, max_rate: Number, min_rate: Number, start_timestamp: Moment, end_timestamp: Moment}>}
-		 */
-		const allMeterLineReadings = await conn.func('meter_line_readings_unit',
-			[meterIDs, graphicUnitId, fromTimestamp || '-infinity', toTimestamp || 'infinity', 'raw', maxRawPoints, maxHourlyPoints]
-		);
-		console.log(allMeterLineReadings);
-		const readingsByMeterID = mapToObject(meterIDs, () => []);
+		// Normalize timestamps so a same-day range returns data for the whole day
+		let from = fromTimestamp || '-infinity';
+		let to = toTimestamp || 'infinity';
+
+		// Helper to parse Moment or Date/string to Date
+		const parseToDate = v => {
+			if (!v) return null;
+			if (typeof v === 'object' && typeof v.toDate === 'function') return v.toDate(); // moment
+			const d = new Date(v);
+			return isNaN(d.getTime()) ? null : d;
+		};
+
+		if (from !== '-infinity' && to !== 'infinity') {
+			const fromDate = parseToDate(from);
+			const toDate = parseToDate(to);
+			if (fromDate && toDate) {
+				// If same calendar day, extend `to` to next day's 00:00:00 to include the whole day
+				if (fromDate.getFullYear() === toDate.getFullYear() &&
+					fromDate.getMonth() === toDate.getMonth() &&
+					fromDate.getDate() === toDate.getDate()) {
+					toDate.setDate(toDate.getDate() + 1);
+				}
+				from = fromDate.toISOString();
+				to = toDate.toISOString();
+			}
+		}
+
+		// Use raw point accuracy instead of 'auto' to avoid the materialized views
+		// which incorrectly inflate cumulative meter readings by treating them as
+		// interval quantities (multiplying by 3600/interval_seconds).
+		// Raw mode returns actual reading values with just the CIK conversion applied.
+		const allMeterLineReadings = await conn.func('meter_line_readings_unit', [meterIDs, graphicUnitId, from, to, 'raw', 2000, 1440]);
+
+		const readingsByMeterID = Object.fromEntries(meterIDs.map(id => [String(id), []]));
 		for (const row of allMeterLineReadings) {
-			readingsByMeterID[row.meter_id].push(
-				{ reading_rate: row.reading_rate, min_rate: row.min_rate, max_rate: row.max_rate, start_timestamp: row.start_timestamp, end_timestamp: row.end_timestamp }
-			);
+			const key = String(row.meter_id);
+			readingsByMeterID[key].push({ reading_rate: row.reading_rate, min_rate: row.min_rate, max_rate: row.max_rate, start_timestamp: row.start_timestamp, end_timestamp: row.end_timestamp });
 		}
 		return readingsByMeterID;
 	}
@@ -275,21 +299,23 @@ class Reading {
 	 * @returns {Promise<object<int, array<{reading_rate: number, start_timestamp: }>>>}
 	 */
 	static async getGroupLineReadings(groupIDs, graphicUnitId, fromTimestamp, toTimestamp, conn) {
-		// maxRawPoints is not used for groups.
 		const [maxRawPoints, maxHourlyPoints] = determineMaxPoints();
-		/**
-		 * @type {array<{group_id: int, reading_rate: Number, start_timestamp: Moment, end_timestamp: Moment}>}
-		 */
 		const allGroupLineReadings = await conn.func('group_line_readings_unit',
-			[groupIDs, graphicUnitId, fromTimestamp, toTimestamp, 'auto', maxHourlyPoints]
+			[groupIDs, graphicUnitId, fromTimestamp || '-infinity', toTimestamp || 'infinity', 'auto', maxHourlyPoints]
 		);
 
 		const readingsByGroupID = mapToObject(groupIDs, () => []);
 		for (const row of allGroupLineReadings) {
 			readingsByGroupID[row.group_id].push(
-				{ reading_rate: row.reading_rate, start_timestamp: row.start_timestamp, end_timestamp: row.end_timestamp }
+				{ reading_rate: row.reading_rate, min_rate: row.min_rate || 0, max_rate: row.max_rate || 0, start_timestamp: row.start_timestamp, end_timestamp: row.end_timestamp }
 			);
 		}
+
+		// Sort readings by timestamp to prevent graph looping artifacts
+		for (const id in readingsByGroupID) {
+			readingsByGroupID[id].sort((a, b) => new Date(a.start_timestamp) - new Date(b.start_timestamp));
+		}
+
 		return readingsByGroupID;
 	}
 
@@ -304,7 +330,38 @@ class Reading {
 	 * @returns {Promise<object<int, array<{reading: number, start_timestamp: Moment, end_timestamp: Moment}>>>}
 	 */
 	static async getMeterBarReadings(meterIDs, graphicUnitId, fromTimestamp, toTimestamp, barWidthDays, conn) {
-		const allBarReadings = await conn.func('meter_bar_readings_unit', [meterIDs, graphicUnitId, barWidthDays, fromTimestamp, toTimestamp]);
+		let from = fromTimestamp || '-infinity';
+		let to = toTimestamp || 'infinity';
+
+		const parseToDate = v => {
+			if (!v) return null;
+			if (typeof v === 'object' && typeof v.toDate === 'function') return v.toDate(); // moment
+			const d = new Date(v);
+			return isNaN(d.getTime()) ? null : d;
+		};
+
+		if (from !== '-infinity' && to !== 'infinity') {
+			const fromDate = parseToDate(from);
+			const toDate = parseToDate(to);
+			if (fromDate && toDate) {
+				// If same calendar day, extend `to` to next day's 00:00:00 to include the whole day
+				if (fromDate.getFullYear() === toDate.getFullYear() &&
+					fromDate.getMonth() === toDate.getMonth() &&
+					fromDate.getDate() === toDate.getDate()) {
+					toDate.setDate(toDate.getDate() + 1);
+				}
+				from = fromDate.toISOString();
+				to = toDate.toISOString();
+			} else {
+				if (fromTimestamp && typeof fromTimestamp.toISOString === 'function') from = fromTimestamp.toISOString();
+				if (toTimestamp && typeof toTimestamp.toISOString === 'function') to = toTimestamp.toISOString();
+			}
+		} else {
+			if (fromTimestamp && typeof fromTimestamp.toISOString === 'function') from = fromTimestamp.toISOString();
+			if (toTimestamp && typeof toTimestamp.toISOString === 'function') to = toTimestamp.toISOString();
+		}
+
+		const allBarReadings = await conn.func('meter_bar_readings_unit', [meterIDs, graphicUnitId, barWidthDays, from, to]);
 		const barReadingsByMeterID = mapToObject(meterIDs, () => []);
 		for (const row of allBarReadings) {
 			barReadingsByMeterID[row.meter_id].push(
@@ -325,7 +382,38 @@ class Reading {
 	 * @returns {Promise<object<int, array<{reading: number, start_timestamp: Moment, end_timestamp: Moment}>>>}
 	 */
 	static async getGroupBarReadings(groupIDs, graphicUnitId, fromTimestamp, toTimestamp, barWidthDays, conn) {
-		const allBarReadings = await conn.func('group_bar_readings_unit', [groupIDs, graphicUnitId, barWidthDays, fromTimestamp, toTimestamp]);
+		let from = fromTimestamp || '-infinity';
+		let to = toTimestamp || 'infinity';
+
+		const parseToDate = v => {
+			if (!v) return null;
+			if (typeof v === 'object' && typeof v.toDate === 'function') return v.toDate(); // moment
+			const d = new Date(v);
+			return isNaN(d.getTime()) ? null : d;
+		};
+
+		if (from !== '-infinity' && to !== 'infinity') {
+			const fromDate = parseToDate(from);
+			const toDate = parseToDate(to);
+			if (fromDate && toDate) {
+				// If same calendar day, extend `to` to next day's 00:00:00 to include the whole day
+				if (fromDate.getFullYear() === toDate.getFullYear() &&
+					fromDate.getMonth() === toDate.getMonth() &&
+					fromDate.getDate() === toDate.getDate()) {
+					toDate.setDate(toDate.getDate() + 1);
+				}
+				from = fromDate.toISOString();
+				to = toDate.toISOString();
+			} else {
+				if (fromTimestamp && typeof fromTimestamp.toISOString === 'function') from = fromTimestamp.toISOString();
+				if (toTimestamp && typeof toTimestamp.toISOString === 'function') to = toTimestamp.toISOString();
+			}
+		} else {
+			if (fromTimestamp && typeof fromTimestamp.toISOString === 'function') from = fromTimestamp.toISOString();
+			if (toTimestamp && typeof toTimestamp.toISOString === 'function') to = toTimestamp.toISOString();
+		}
+
+		const allBarReadings = await conn.func('group_bar_readings_unit', [groupIDs, graphicUnitId, barWidthDays, from, to]);
 		const barReadingsByGroupID = mapToObject(groupIDs, () => []);
 		for (const row of allBarReadings) {
 			barReadingsByGroupID[row.group_id].push(

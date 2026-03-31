@@ -27,6 +27,13 @@ import ErrorComponent from './router/ErrorComponent';
 import { selectSelectedLanguage } from '../redux/slices/appStateSlice';
 import LogMsgComponent from './admin/LogMsgComponent';
 import VisualUnitDetailComponent from './visual-unit/VisualUnitDetailComponent';
+import SimpleLinePage from './SimpleLinePage';
+import MainDashboard from './MainDashboard';
+import MDashDisplay from './MDashDisplay';
+import StatsDashboard from './StatsDashboard';
+import ReportsPage from './admin/reports/ReportsPage';
+import ReportLogPage from './admin/reports/ReportLogPage';
+import MqttComponent from './admin/mqtt/MqttComponent';
 
 /**
  * @returns the router component Responsible for client side routing.
@@ -43,11 +50,15 @@ export default function RouteComponent() {
 
 // Router Responsible for client side routing.
 const router = createBrowserRouter([
+	{ path: '/simple-line-only', element: <SimpleLinePage /> },
+	{ path: '/main-dashboard-front', element: <MainDashboard /> },
+	{ path: '/mdash-display', element: <MDashDisplay /> },
 	{
 		// TODO Error Component needs to be implemented, Its currently a bare bones placeholder
 		path: '/', element: <AppLayout />, errorElement: <ErrorComponent />,
 		children: [
-			{ index: true, element: <HomeComponent /> },
+			{ index: true, element: <StatsDashboard /> },
+			{ path: 'charts', element: <HomeComponent /> },
 			{ path: 'groups', element: <GroupsDetailComponent /> },
 			{ path: 'meters', element: <MetersDetailComponent /> },
 			{ path: 'graph', element: <GraphLink /> },
@@ -62,8 +73,10 @@ const router = createBrowserRouter([
 					{ path: 'units', element: <UnitsDetailComponent /> },
 					{ path: 'users', element: <UsersDetailComponent /> },
 					{ path: 'logmsg', element: <LogMsgComponent /> },
-					{ path: 'users', element: <UsersDetailComponent /> },
-					{ path: 'visual-unit', element: <VisualUnitDetailComponent/> }
+					{ path: 'visual-unit', element: <VisualUnitDetailComponent /> },
+					{ path: 'reports', element: <ReportsPage /> },
+					{ path: 'report-log', element: <ReportLogPage /> },
+					{ path: 'mqtt', element: <MqttComponent /> }
 				]
 			},
 			{

@@ -3,5 +3,5 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 UPDATE users
-SET username = ${username}, role = ${role}, note = ${note}
+SET username = ${username}, role = ${role}, note = ${note}, image = ${image}, email = ${email}, mobile_no = ${mobileNo}
 WHERE id = ${id};

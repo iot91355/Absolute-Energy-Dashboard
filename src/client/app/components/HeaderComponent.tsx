@@ -25,10 +25,10 @@ export default function HeaderComponent() {
 		<div className='container-fluid' id='header'>
 			<div className='row'>
 				<div className='d-none d-lg-block col-4'>
-					<Link to='/'><LogoComponent height={80} url='./logo.png' /></Link>
+					<Link to='/'><LogoComponent height={80} url='./abs-logo.png' /></Link>
 				</div>
 				<div className='d-lg-none col-4'>
-					<Link to='/'><LogoComponent height={50} url='./logo.png' /></Link>
+					<Link to='/'><LogoComponent height={50} url='./abs-logo.png' /></Link>
 				</div>
 				<div className='d-none d-xl-block col-4 text-center'>
 					<h1 style={largeTitleStyle}>{siteTitle}</h1>

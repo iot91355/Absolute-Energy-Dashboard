@@ -35,6 +35,8 @@ export const formInputStyle: React.CSSProperties = {
 };
 
 export const labelStyle: React.CSSProperties = {
+	display: 'flex',
+	gap: '10px',
 	fontWeight: 'bold',
 	margin: 0
 };

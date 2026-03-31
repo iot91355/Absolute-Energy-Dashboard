@@ -113,24 +113,37 @@ export default function IntervalControlsComponent() {
 	};
 
 	return (
-		<div>
-			<div style={divTopBottomPadding}>
-				<p style={labelStyle}>
-					{translate(
-						chartType === ChartTypes.bar ? 'bar.interval' :
-							chartType === ChartTypes.map ? 'map.interval' :
-								'compare.period'
-					)}:
-					<TooltipMarkerComponent page='home' helpTextId={
-						chartType === ChartTypes.bar ? 'help.home.bar.days.tip' :
-							chartType === ChartTypes.map ? 'help.home.map.interval.tip' :
-								'help.home.compare.period.tip'
-					} />
-				</p>
+		<div className="control-group">
+			<label htmlFor="durationDays" className="control-label" style={{ marginBottom: 0 }}>
+				{translate(
+					chartType === ChartTypes.bar ? 'bar.interval' :
+						chartType === ChartTypes.map ? 'map.interval' :
+							'compare.period'
+				)}:
+				<TooltipMarkerComponent page='home' helpTextId={
+					chartType === ChartTypes.bar ? 'help.home.bar.days.tip' :
+						chartType === ChartTypes.map ? 'help.home.map.interval.tip' :
+							'help.home.compare.period.tip'
+				} />
+			</label>
+			<div style={{ position: 'relative' }}>
 				<Input
 					id='durationDays'
 					name='durationDays'
 					type='select'
+					className="custom-select-input"
+					style={{
+						width: 'auto',
+						minWidth: '120px',
+						height: '34px',
+						fontSize: '13px',
+						fontWeight: 500,
+						paddingRight: '30px',
+						borderColor: '#E5E7EB',
+						borderRadius: '8px',
+						color: '#374151',
+						boxShadow: 'none'
+					}}
 					value={chartType === ChartTypes.compare ? comparePeriod?.toString() : days}
 					onChange={e => chartType === ChartTypes.compare ? handleComparePeriodChange(e.target.value) : handleDaysChange(e.target.value)}
 				>
@@ -148,28 +161,39 @@ export default function IntervalControlsComponent() {
 						</option>
 					}
 				</Input>
-				{showCustomDuration && chartType !== ChartTypes.compare &&
-					<FormGroup>
-						<Label for='days'>{translate('days.enter')}:</Label>
-						<Input
-							id='days'
-							name='days'
-							type='number'
-							onChange={e => handleCustomDaysChange(Number(e.target.value))}
-							// This grabs each key hit and then finishes input when hit enter.
-							onKeyDown={e => handleEnter(e.key)}
-							step='1'
-							min={MIN_DAYS}
-							max={MAX_DAYS}
-							value={daysCustom}
-							invalid={!daysValid(daysCustom)}
-						/>
-						<FormFeedback>
-							<FormattedMessage id="error.bounds" values={{ min: MIN_DAYS, max: MAX_DAYS }} />
-						</FormFeedback>
-					</FormGroup>
-				}
 			</div>
+
+			{showCustomDuration && chartType !== ChartTypes.compare &&
+				<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+					<Label for='days' className="control-label" style={{ marginBottom: 0 }}>{translate('days.enter')}:</Label>
+					<Input
+						id='days'
+						name='days'
+						type='number'
+						style={{
+							width: '80px',
+							height: '34px',
+							fontSize: '13px',
+							padding: '4px 8px',
+							borderRadius: '8px',
+							border: '1px solid #E5E7EB'
+						}}
+						onChange={e => handleCustomDaysChange(Number(e.target.value))}
+						// This grabs each key hit and then finishes input when hit enter.
+						onKeyDown={e => handleEnter(e.key)}
+						step='1'
+						min={MIN_DAYS}
+						max={MAX_DAYS}
+						value={daysCustom}
+						invalid={!daysValid(daysCustom)}
+					/>
+					{!daysValid(daysCustom) &&
+						<span style={{ color: 'red', fontSize: '12px' }}>
+							<FormattedMessage id="error.bounds" values={{ min: MIN_DAYS, max: MAX_DAYS }} />
+						</span>
+					}
+				</div>
+			}
 		</div>
 	);
 }

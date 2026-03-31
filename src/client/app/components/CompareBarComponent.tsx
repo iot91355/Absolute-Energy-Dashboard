@@ -15,7 +15,7 @@ import {
 import { selectSelectedLanguage } from '../redux/slices/appStateSlice';
 import Locales from '../types/locales';
 import { getComparePeriodLabels, getCompareChangeSummary, calculateCompareShift } from '../utils/calculateCompare';
-import { getAreaUnitConversion } from '../utils/getAreaUnitConversion';
+import { getAreaUnitConversion, AreaUnitType } from '../utils/getAreaUnitConversion';
 import { UnitRepresentType } from '../types/redux/units';
 import { selectUnitDataById } from '../redux/api/unitsApi';
 import { selectMeterDataById } from '../redux/api/metersApi';
@@ -49,6 +49,9 @@ const CompareBarComponent: React.FC<CompareBarComponentProps> = ({ entity }) => 
 	const groupDataById = useAppSelector(selectGroupDataById);
 	const selectUnitState = unitDataById[graphingUnit];
 	const locale = useAppSelector(selectSelectedLanguage);
+
+	// Pull the selected area unit at the top level (avoid calling hooks conditionally)
+	const selectedAreaUnit = useAppSelector(selectAreaUnit);
 
 	const translate = useTranslate();
 	let unitLabel: string = '';
@@ -139,9 +142,25 @@ const CompareBarComponent: React.FC<CompareBarComponentProps> = ({ entity }) => 
 		if (areaNormalization) {
 			const area = entity.isGroup ? groupDataById[entity.id].area : meterDataById[entity.id].area;
 			const areaUnit = entity.isGroup ? groupDataById[entity.id].areaUnit : meterDataById[entity.id].areaUnit;
-			const normalization = area * getAreaUnitConversion(areaUnit, useAppSelector(selectAreaUnit));
+			const normalization = area * getAreaUnitConversion(areaUnit, selectedAreaUnit);
 			previousPeriod /= normalization;
 			currentPeriod /= normalization;
+
+			// Append per-area unit label to y-axis label (e.g., kWh / m²)
+			let areaLabel = '';
+			switch (selectedAreaUnit) {
+				case AreaUnitType.meters:
+					areaLabel = 'm²';
+					break;
+				case AreaUnitType.feet:
+					areaLabel = 'ft²';
+					break;
+				default:
+					areaLabel = '';
+			}
+			if (areaLabel) {
+				unitLabel = unitLabel ? `${unitLabel}/${areaLabel}` : `/${areaLabel}`;
+			}
 		}
 
 		datasets.push(
@@ -232,6 +251,31 @@ const CompareBarComponent: React.FC<CompareBarComponentProps> = ({ entity }) => 
 			config={{
 				displayModeBar: true,
 				modeBarButtonsToRemove: defaultButtons,
+				modeBarButtonsToAdd: [
+					{
+						name: 'fullscreen',
+						title: translate('fullscreen') || 'Toggle Full Screen',
+						icon: {
+							width: 24,
+							height: 24,
+							path: 'M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z'
+						},
+						click: function (gd: any) {
+							const elt = gd.parentElement; // Get Plotly container
+							if (!document.fullscreenElement) {
+								if (elt?.requestFullscreen) {
+									elt.requestFullscreen().catch((err: Error) => {
+										alert(`Error attempting to enable fullscreen mode: ${err.message}`);
+									});
+								}
+							} else {
+								if (document.exitFullscreen) {
+									document.exitFullscreen();
+								}
+							}
+						}
+					}
+				],
 				locale,
 				locales: Locales
 			}}

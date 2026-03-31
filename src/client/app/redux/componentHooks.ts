@@ -7,6 +7,7 @@ import { selectCurrentUserRole, selectIsAdmin } from './slices/currentUserSlice'
 import { useAppSelector } from './reduxHooks';
 import localeData, { LocaleDataKey } from '../translations/data';
 import { createIntlCache, createIntl, defineMessages } from 'react-intl';
+import { useMemo } from 'react';
 
 export const useWaitForInit = () => {
 	const isAdmin = useAppSelector(selectIsAdmin);
@@ -21,18 +22,23 @@ type TranslateFunction = {
 	(messageID: string): string;
 }
 
+const cache = createIntlCache();
+
 // usage
 // const translate = useTranslate()
 // translate('myKey')
 export const useTranslate = () => {
 	const lang = useAppSelector(selectSelectedLanguage);
-	const cache = createIntlCache();
-	const messages = localeData[lang];
-	const intl = createIntl({ locale: lang, messages }, cache);
 
-	const translate: TranslateFunction = (messageID: LocaleDataKey | string) => {
-		return intl.formatMessage(defineMessages({ [messageID]: { id: messageID } })[messageID]);
-	};
+	const translate = useMemo(() => {
+		const messages = localeData[lang];
+		const intl = createIntl({ locale: lang, messages }, cache);
+
+		const translateFn: TranslateFunction = (messageID: LocaleDataKey | string) => {
+			return intl.formatMessage(defineMessages({ [messageID]: { id: messageID } })[messageID]);
+		};
+		return translateFn;
+	}, [lang]);
 
 	return translate;
 };

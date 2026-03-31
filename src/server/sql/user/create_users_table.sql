@@ -7,5 +7,8 @@ CREATE TABLE IF NOT EXISTS users(
   username VARCHAR(254) UNIQUE,
   password_hash CHAR(60) NOT NULL,
   role user_type NOT NULL,
-  note TEXT DEFAULT ''
+  note TEXT DEFAULT '',
+  image TEXT DEFAULT '',
+  mobile_no VARCHAR(20),
+  email VARCHAR(254)
 )

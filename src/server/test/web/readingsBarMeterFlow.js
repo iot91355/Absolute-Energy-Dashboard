@@ -43,7 +43,7 @@ mocha.describe('readings API', () => {
 						},
 						{
 							// u5
-							name: 'Electric',
+							name: 'Electric',	
 							identifier: '',
 							unitRepresent: Unit.unitRepresentType.FLOW,
 							secInRate: 3600,

@@ -25,6 +25,8 @@ export interface AppState {
 	selectedLanguage: LanguageTypes;
 	languageManuallySet: boolean;
 	refreshingReadings: boolean;
+	theme: 'light' | 'dark';
+	sidebarCollapsed: boolean;
 }
 
 const defaultState: AppState = {
@@ -33,7 +35,9 @@ const defaultState: AppState = {
 	selectedLanguage: LanguageTypes.en,
 	chartLinkHideOptions: false,
 	languageManuallySet: false,
-	refreshingReadings: false
+	refreshingReadings: false,
+	theme: 'light',
+	sidebarCollapsed: false
 };
 
 export const appStateSlice = createThunkSlice({
@@ -62,6 +66,12 @@ export const appStateSlice = createThunkSlice({
 		}),
 		setRefresingReadings: create.reducer<boolean>((state, action) => {
 			state.refreshingReadings = action.payload;
+		}),
+		toggleTheme: create.reducer(state => {
+			state.theme = state.theme === 'light' ? 'dark' : 'light';
+		}),
+		toggleSidebar: create.reducer(state => {
+			state.sidebarCollapsed = !state.sidebarCollapsed;
 		}),
 		initApp: create.asyncThunk(
 			// Thunk initiates many data fetching calls on startup before react begins to render
@@ -132,7 +142,9 @@ export const appStateSlice = createThunkSlice({
 		selectOptionsVisibility: state => state.optionsVisibility,
 		selectSelectedLanguage: state => state.selectedLanguage,
 		selectChartLinkHideOptions: state => state.chartLinkHideOptions,
-		selectRefreshingReadings: state => state.refreshingReadings
+		selectRefreshingReadings: state => state.refreshingReadings,
+		selectTheme: state => state.theme,
+		selectSidebarCollapsed: state => state.sidebarCollapsed
 	}
 });
 
@@ -143,7 +155,9 @@ export const {
 	setOptionsVisibility,
 	updateSelectedLanguage,
 	setChartLinkOptionsVisibility,
-	setRefresingReadings
+	setRefresingReadings,
+	toggleTheme,
+	toggleSidebar
 } = appStateSlice.actions;
 
 export const {
@@ -151,5 +165,7 @@ export const {
 	selectOptionsVisibility,
 	selectSelectedLanguage,
 	selectChartLinkHideOptions,
-	selectRefreshingReadings
+	selectRefreshingReadings,
+	selectTheme,
+	selectSidebarCollapsed
 } = appStateSlice.selectors;

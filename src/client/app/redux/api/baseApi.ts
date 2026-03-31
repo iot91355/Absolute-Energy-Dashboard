@@ -3,7 +3,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { RootState } from '../../store';
+// Use a local state type to break circular dependency with store.ts
+type LocalRootState = {
+	currentUser: {
+		token: string | null;
+	};
+};
+
 // TODO Should be env variable?
 const baseHref = (document.getElementsByTagName('base')[0] || {}).href;
 
@@ -12,7 +18,7 @@ export const baseApi = createApi({
 	baseQuery: fetchBaseQuery({
 		baseUrl: baseHref,
 		prepareHeaders: (headers, { getState }) => {
-			const state = getState() as RootState;
+			const state = getState() as LocalRootState;
 			// For each api call attempt to set the JWT token in the request header
 			// Token placed in store either on startup after validation, or via credentialed login
 			if (state.currentUser.token) {

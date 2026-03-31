@@ -46,7 +46,10 @@ router.get('/token', optionalAuthMiddleware, async (req, res) => {
 					res.status(200).json(
 						{
 							username: userProfile.username,
-							role: userProfile.role
+							role: userProfile.role,
+							image: userProfile.image,
+							email: userProfile.email,
+							mobileNo: userProfile.mobileNo
 						});
 				} catch (error) {
 					res.status(401).json({ message: 'User does not exist in database.' });
@@ -103,6 +106,15 @@ router.post('/create', adminAuthMiddleware('create a user.'), async (req, res) =
 			},
 			note: {
 				type: 'string'
+			},
+			image: {
+				type: 'string'
+			},
+			email: {
+				type: 'string'
+			},
+			mobileNo: {
+				type: 'string'
 			}
 		}
 	};
@@ -110,7 +122,7 @@ router.post('/create', adminAuthMiddleware('create a user.'), async (req, res) =
 		res.status(400).json({ message: 'Invalid params' });
 	} else {
 		try {
-			const { username, password, role, note } = req.body;
+			const { username, password, role, note, image, email, mobileNo } = req.body;
 			const conn = getConnection();
 			// Check if user already exists
 			const currentUser = await User.getByUsername(username, conn);
@@ -118,7 +130,7 @@ router.post('/create', adminAuthMiddleware('create a user.'), async (req, res) =
 				res.status(400).send({ message: `user ${username} already exists so cannot create` });
 			} else {
 				const hashedPassword = await bcrypt.hash(password, 10);
-				const user = new User(undefined, username, hashedPassword, role, note);
+				const user = new User(undefined, username, hashedPassword, role, note, image, email, mobileNo);
 				await user.insert(conn);
 				res.sendStatus(200);
 			}
@@ -131,7 +143,7 @@ router.post('/create', adminAuthMiddleware('create a user.'), async (req, res) =
 
 // Route for updating an existing user.
 router.post('/edit', adminAuthMiddleware('edit a user'), async (req, res) => {
-	
+
 	const validParams = {
 		type: 'object',
 		required: ['user'],
@@ -147,7 +159,7 @@ router.post('/edit', adminAuthMiddleware('edit a user'), async (req, res) => {
 						type: 'string',
 						minLength: 3,
 						maxLength: 254
-							},
+					},
 					role: {
 						type: 'string',
 						enum: Object.values(User.role)
@@ -156,9 +168,18 @@ router.post('/edit', adminAuthMiddleware('edit a user'), async (req, res) => {
 						type: 'string',
 						// TODO Do not have minLength: 8 because this is optional. Nice if could check if present.
 						maxLength: 128
-		
+
 					},
 					note: {
+						type: 'string'
+					},
+					image: {
+						type: 'string'
+					},
+					email: {
+						type: 'string'
+					},
+					mobileNo: {
 						type: 'string'
 					}
 				}
@@ -172,8 +193,8 @@ router.post('/edit', adminAuthMiddleware('edit a user'), async (req, res) => {
 		try {
 			const conn = getConnection();
 			const { user } = req.body;
-			const userBeforeChanges = await User.getByID(user.id,conn);
-			
+			const userBeforeChanges = await User.getByID(user.id, conn);
+
 			// This protects the database so that there will always be at least one admin
 			if (userBeforeChanges.role === 'admin' && user.role !== 'admin') {
 				const numberOfAdmins = await User.getNumberOfAdmins(conn);
@@ -191,10 +212,10 @@ router.post('/edit', adminAuthMiddleware('edit a user'), async (req, res) => {
 
 			// update user
 			userUpdates.push(
-				User.updateUser(user.id, user.username, user.role, user.note, conn)
+				User.updateUser(user.id, user.username, user.role, user.note, user.image, user.email, user.mobileNo, conn)
 			);
-			
-			
+
+
 			// update the user's password if needed
 			if (user.password) {
 				const hashedPassword = await bcrypt.hash(user.password, 10);
@@ -207,7 +228,7 @@ router.post('/edit', adminAuthMiddleware('edit a user'), async (req, res) => {
 			return res.sendStatus(200);
 
 		} catch (error) {
-			
+
 			log.error('Error while performing edit user request.', error);
 			res.status(500).json({
 				message: 'Error while performing edit user request.',

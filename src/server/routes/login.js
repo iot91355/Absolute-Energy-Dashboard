@@ -11,6 +11,7 @@ const validate = require('jsonschema').validate;
 const { log } = require('../log');
 const { getConnection } = require('../db');
 const { credentialsRequestValidationMiddleware } = require('./authenticator');
+const { sendLoginNotification } = require('../services/loginMailer');
 
 const router = express.Router();
 
@@ -54,6 +55,9 @@ router.post('/', credentialsRequestValidationMiddleware, async (req, res) => {
 			if (isValid) {
 				const token = jwt.sign({ data: user.id }, secretToken, { expiresIn: 86400 });
 				res.json({ token: token, username: user.username, role: user.role });
+				// Send login notification email (non-blocking)
+				const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+				sendLoginNotification(user.username, user.role, clientIp, new Date()).catch(() => {});
 			} else {
 				throw new Error('Unauthorized password');
 			}

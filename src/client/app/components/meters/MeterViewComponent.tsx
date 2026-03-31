@@ -65,8 +65,11 @@ export default function MeterViewComponent(props: MeterViewComponentProps) {
 				</div>
 			}
 			{loggedInAsAdmin &&
-				<div className={props.meter.displayable.toString()}>
-					<b><FormattedMessage id="displayable" /></b> {translate(`TrueFalseType.${props.meter.displayable.toString()}`)}
+				<div className="item-container">
+					<b><FormattedMessage id="displayable" /></b>
+					<span className={`status-badge ${props.meter.displayable.toString()}`}>
+						{translate(`TrueFalseType.${props.meter.displayable.toString()}`)}
+					</span>
 				</div>
 			}
 			{loggedInAsAdmin &&

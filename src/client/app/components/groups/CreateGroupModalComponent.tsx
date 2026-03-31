@@ -277,7 +277,12 @@ export default function CreateGroupModalComponent() {
 		// First must get a set from the array of deep meter numbers which is all meters currently in this group.
 		const deepMetersSet = new Set(state.deepMeters);
 		// Get the units that are compatible with this set of meters.
-		const allowedDefaultGraphicUnit = unitsCompatibleWithMeters(deepMetersSet, metersDataById, globalCikState);
+		let allowedDefaultGraphicUnit: Set<number>;
+		if (deepMetersSet.size === 0) {
+			allowedDefaultGraphicUnit = new Set(Array.from(graphicUnitsState.possibleGraphicUnits).map(u => u.id));
+		} else {
+			allowedDefaultGraphicUnit = unitsCompatibleWithMeters(deepMetersSet, metersDataById, globalCikState);
+		}
 		// No unit allowed so modify allowed ones. Should not be there but will be fine if is.
 		allowedDefaultGraphicUnit.add(-99);
 		graphicUnitsState.possibleGraphicUnits.forEach(unit => {
@@ -377,7 +382,7 @@ export default function CreateGroupModalComponent() {
 								name='name'
 								type='text'
 								autoComplete='on'
-								onChange={e => {handleStringChange(e);}}
+								onChange={e => { handleStringChange(e); }}
 								required value={state.name}
 								invalid={state.name === ''} />
 							<FormFeedback>
@@ -392,7 +397,7 @@ export default function CreateGroupModalComponent() {
 								name='defaultGraphicUnit'
 								type='select'
 								value={state.defaultGraphicUnit}
-								onChange={e => {handleNumberChange(e);}}>
+								onChange={e => { handleNumberChange(e); }}>
 								{/* First list the selectable ones and then the rest as disabled. */}
 								{Array.from(graphicUnitsState.compatibleGraphicUnits).map(unit => {
 									return (<option value={unit.id} key={unit.id}>{unit.identifier}</option>);
@@ -411,7 +416,7 @@ export default function CreateGroupModalComponent() {
 								name='displayable'
 								type='select'
 								value={state.displayable.toString()}
-								onChange={e => {handleBooleanChange(e);}}>
+								onChange={e => { handleBooleanChange(e); }}>
 								{Object.keys(TrueFalseType).map(key => {
 									return (<option value={key} key={key}>{translate(`TrueFalseType.${key}`)}</option>);
 								})}
@@ -425,7 +430,7 @@ export default function CreateGroupModalComponent() {
 								name='gps'
 								type='text'
 								autoComplete='on'
-								onChange={e => {handleStringChange(e);}}
+								onChange={e => { handleStringChange(e); }}
 								value={getGPSString(state.gps)} />
 						</FormGroup></Col>
 					</Row><Row xs='1' lg='2'>
@@ -441,7 +446,7 @@ export default function CreateGroupModalComponent() {
 									// cannot use defaultValue because it won't update when area is auto calculated
 									// this makes the validation redundant but still a good idea
 									value={state.area}
-									onChange={e => {handleNumberChange(e);}}
+									onChange={e => { handleNumberChange(e); }}
 									invalid={state.area < 0} />
 								{/* Calculate sum of meter areas */}
 								<Button color='secondary' onClick={handleAutoCalculateArea}>
@@ -461,7 +466,7 @@ export default function CreateGroupModalComponent() {
 								name='areaUnit'
 								type='select'
 								value={state.areaUnit}
-								onChange={e => {handleStringChange(e);}}
+								onChange={e => { handleStringChange(e); }}
 								invalid={state.area > 0 && state.areaUnit === AreaUnitType.none}>
 								{Object.keys(AreaUnitType).map(key => {
 									return (<option value={key} key={key}>{translate(`AreaUnitType.${key}`)}</option>);
@@ -479,7 +484,7 @@ export default function CreateGroupModalComponent() {
 							id='note'
 							name='note'
 							type='textarea'
-							onChange={e => {handleStringChange(e);}}
+							onChange={e => { handleStringChange(e); }}
 							value={state.note} />
 					</FormGroup>
 					{/* The child meters in this group */}
