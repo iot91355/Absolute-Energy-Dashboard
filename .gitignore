@@ -18,9 +18,10 @@ private
 
 # Build files
 /src/client/public/app/*
-
 # Environment Variables
 .env
+.env.local
+.env.*.local
 
 # CSV files (except ones needed for database tests)
 *.csv
@@ -34,28 +35,52 @@ private
 
 # Database
 postgres-data
+*.sqlite
+data.json
 
-# Text files
+# Build and Dist
+/dist
+/build
+/.next
+/out
+
+# Text and Temporary files (documentation should be .md)
 *.txt
+!License.txt
 !LICENSE.txt
-
-# Test data (normally for developers)
-src/server/test/db/data/automatedTests/*.csv
-
-# Server tmp directory
-src/server/tmp
+!CONTRIBUTING.md
+!README.md
+!SECURITY.md
+!SUPPORT.md
+!USAGE.md
+*.log
+*.sql
+*.diff
+*.patch
 
 # nohup.out is created when working inside the remote container with Visual Studio Code.
 nohup.out
 
-# Mac Finder files - do here so avoid in VSC container
+# OS files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Visual Studio Code settings file
-.vscode/settings.json
+# Developer tools
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.iml
+*.iws
+
+# ui-testing screenshots
+src/cypress/screenshots/*
+src/cypress/videos/*
 
 # tmp file
 src/server/tmp/*
-
-#ui-testing screenshots
-src/cypress/screenshots/*
+/tmp/*
