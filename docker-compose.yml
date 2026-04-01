@@ -62,7 +62,7 @@ services:
         links:
             - database
 
-        restart: on-failure
+        restart: "no"
 
         # Load the source code into the container.
         # Using a volume allows autorebuild to work.
