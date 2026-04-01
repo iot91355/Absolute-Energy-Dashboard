@@ -99,7 +99,7 @@ services:
         profiles:
             - ui-testing
         environment:
-            - CYPRESS_BASE_URL=http://web:3000
+            - CYPRESS_BASE_URL=http://web:8000
             - DISPLAY=:99
         working_dir: /usr/src/app
         depends_on:
