@@ -31,7 +31,7 @@ services:
         # Configuration variables for the app.
         environment:
             - OED_PRODUCTION=no
-            - OED_SERVER_PORT=3000
+            - OED_SERVER_PORT=8000
             - OED_DB_USER=oed
             - OED_DB_DATABASE=oed
             - OED_DB_TEST_DATABASE=oed_testing
@@ -70,7 +70,7 @@ services:
             - ./:/usr/src/app
         # Map the default port.
         ports:
-            - "3000:3000" # Should be commented out if you uncomment 80:3000 below.
+            - "8000:8000" # Should be commented out if you uncomment 80:3000 below.
             - "9350:9229" # Debug port, should be commented out for production
             # For production you might want something like:
             # - "80:3000"
@@ -82,7 +82,7 @@ services:
                 # We need the database and it has to be ready for work (see healthcheck above).
                 condition: service_healthy
         healthcheck:
-            test: [ "CMD", "curl", "-f", "http://localhost:3000" ]
+            test: [ "CMD", "curl", "-f", "http://localhost:8000" ]
             interval: 10s
             timeout: 5s
             retries: 5
